@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?> 
+<ShaderConfig>
+  <Code>
+    <Vertex>skin.vert</Vertex>
+    <Fragment>skin.frag</Fragment>
+  </Code>
+  <Defines>
+	<Define name="MAX_BONES" default="60" />
+  </Defines>
+</ShaderConfig>
