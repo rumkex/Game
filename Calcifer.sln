@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jitter", "Jitter\Jitter.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameEngine", "GameEngine\GameEngine.csproj", "{B2B571BE-47DC-41C8-8F9E-38F34C574249}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImportTool", "ImportTool\ImportTool.csproj", "{29B5C39B-C696-4E75-89E8-4D256C89D95B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuaSharp", "LuaSharp\LuaSharp.csproj", "{C651A291-775F-46D6-A2D8-BEF573F97D1E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +29,14 @@ Global
 		{B2B571BE-47DC-41C8-8F9E-38F34C574249}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2B571BE-47DC-41C8-8F9E-38F34C574249}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2B571BE-47DC-41C8-8F9E-38F34C574249}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29B5C39B-C696-4E75-89E8-4D256C89D95B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29B5C39B-C696-4E75-89E8-4D256C89D95B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29B5C39B-C696-4E75-89E8-4D256C89D95B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29B5C39B-C696-4E75-89E8-4D256C89D95B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C651A291-775F-46D6-A2D8-BEF573F97D1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C651A291-775F-46D6-A2D8-BEF573F97D1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C651A291-775F-46D6-A2D8-BEF573F97D1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C651A291-775F-46D6-A2D8-BEF573F97D1E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

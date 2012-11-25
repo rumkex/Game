@@ -1,125 +1,163 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Calcifer.Engine.Content;
 using Calcifer.Engine.Content.Pipeline;
 using Calcifer.Engine.Graphics;
+using Calcifer.Engine.Graphics.Buffers;
 using Calcifer.Engine.Graphics.Primitives;
+using Calcifer.Utilities;
+using Calcifer.Utilities.Logging;
 using OpenTK;
+using OpenTK.Graphics;
 
 namespace Demo.Import
 {
-	public class ObjLoader: ResourceLoader<CompositeResource>
-	{
-	    public ObjLoader(ContentManager parent) : base(parent)
-	    {
-	    }
+    internal struct Triple
+    {
+        public int X, Y, Z;
 
-	    public override CompositeResource Load(string name, Stream stream) {
-			var parser = new TextParser(new StreamReader(stream));
-			var points = new List<Vector3>();
-			var normals = new List<Vector3>();
-			var texCoords = new List<Vector2>();
-			var tris = new List<Vector3i>();
-	        var vertices = new List<SkinnedVertex>();
-            while(parser.NextLine() != null)
-			{
-			    var op = parser.ReadString();
-				switch(op) {
-				case "p":
-					// Point
-					break;
+        public Triple(int x, int y, int z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+    }
 
-				case "v":
-					// Vertex
-					points.Add(parser.ReadVector3());
-					break;
+    public class ObjLoader : ResourceLoader<CompositeResource>
+    {
+        public ObjLoader(ContentManager parent)
+            : base(parent)
+        {
+        }
 
-                case "vt":
-					// TexCoord
-                    texCoords.Add(parser.ReadVector2());
-					break;
+        public override CompositeResource Load(string name, Stream stream)
+        {
+            var parser = new TextParser(new StreamReader(stream)) {DetectQuotes = true};
 
-                case "vn":
-                    // Normal
-                    normals.Add(parser.ReadVector3());
-					break;
+            var submeshes = new Dictionary<string, GeometryBuilder>();
+            var materials = new Dictionary<string, Material>();
+            var currentMaterial = "";
+            var points = new List<Vector3>(new[] { Vector3.Zero });
+            var normals = new List<Vector3>(new[] { Vector3.Zero });
+            var texCoords = new List<Vector2>(new[] { Vector2.Zero });
+            while (parser.NextLine() != null)
+            {
+                if (parser.CurrentLine.StartsWith("#")) continue;
+                var op = parser.ReadString();
+                switch (op)
+                {
+                    case "p":
+                        // Point
+                        break;
 
-                case "f":
-					// Face
-					tris.AddRange(ParseFace(parser.ReadLine().Split(' '), vertices));
-					break;
-				}
-			}
-			
-Vector3[] p = points.ToArray();
-			Vector2[] tc = texCoords.ToArray();
-			Vector3[] n = normals.ToArray();
-			Tri[] f = tris.ToArray();
-			
-			// If there are no specified texcoords or normals, we add a dummy one.
-			// That way the Points will have something to refer to.
-			if(tc.Length == 0) {
-				tc = new Vector2[1];
-				tc[0] = new Vector2(0, 0);
-			}
-			if(n.Length == 0) {
-				n = new Vector3[1];
-				n[0] = new Vector3(1, 0, 0);
-			}
-				
-			return new MeshData(p, n, tc, f);
-		}
+                    case "v":
+                        // Vertex
+                        points.Add(parser.ReadVector3());
+                        break;
 
-	    public override bool Supports(string name, Stream stream)
-	    {
-	        return name.EndsWith(".obj");
-	    }
-		
-		private static IEnumerable<Vector3i> ParseFace(string[] indices, List<SkinnedVertex> vertices) {
-			var p = new SkinnedVertex[indices.Length-1];
-			for(int i = 0; i < p.Length; i++) {
-                p[i] = ParsePoint(indices[i + 1]);
-			}
-			return Triangulate(p);
-			//return new Face(p);
-		}
-		
-		// Takes an array of points and returns an array of triangles.
-		// The points form an arbitrary polygon.
-		private static Tri[] Triangulate(int[] ps) {
-			List<Tri> ts = new List<Tri>();
-			if(ps.Length < 3) {
-				throw new Exception("Invalid shape!  Must have >2 points");
-			}
-			
-			Point lastButOne = ps[1];
-			Point lastButTwo = ps[0];
-			for(int i = 2; i < ps.Length; i++) {
-				Tri t = new Tri(lastButTwo, lastButOne, ps[i]);
-				lastButOne = ps[i];
-				lastButTwo = ps[i-1];
-				ts.Add(t);
-			}
-			return ts.ToArray();
-		}
-		
-		private static SkinnedVertex ParsePoint(string s) {
-			string[] parameters = s.Split('/');
-			int vert, tex, norm;
-			vert = tex = norm = 0;
-			vert = int.Parse(parameters[0]) - 1;
-			// Texcoords and normals are optional in .obj files
-			if(parameters[1] != "") {
-				tex = int.Parse(parameters[1]) - 1;
-			}
-			if(parameters[2] != "") {
-				norm = int.Parse(parameters[2]) - 1;
-			}
-            return new SkinnedVertex(vert, norm, tex);
-		}
-	}
+                    case "vt":
+                        // TexCoord
+                        texCoords.Add(parser.ReadVector2());
+                        break;
+
+                    case "vn":
+                        // Normal
+                        normals.Add(parser.ReadVector3());
+                        break;
+
+                    case "f":
+                        // Face
+                        if (currentMaterial == null) break;
+                        var f = ParseFace(parser.CurrentLine.Split(' '));
+                        submeshes[currentMaterial].Add(f.Select(t => new SkinnedVertex(points[t.X], normals[t.Y], texCoords[t.Z])).ToList(), normals.Count <= 1);
+                        break;
+
+                    case "o":
+                    case "g":
+                        if (currentMaterial != null) submeshes[currentMaterial].NextGeometry();
+                        break;
+                        
+                    case "usemtl":
+                        currentMaterial = parser.ReadString();
+                        if (!submeshes.ContainsKey(currentMaterial))
+                            submeshes.Add(currentMaterial, new GeometryBuilder {Material = materials[currentMaterial]});
+                        else
+                            submeshes[currentMaterial].NextGeometry();
+                        break;
+                    case "mtllib":
+                        var mtlFile = parser.CurrentLine.Substring("mtllib".Length);
+                        foreach (var mat in LoadMaterialsFrom(mtlFile))
+                            materials.Add(mat.Name, mat);
+                        break;
+                    case "s":
+                        Log.WriteLine(LogLevel.Info, "Smoothing groups aren't supported");
+                        break;
+                    default:
+                        throw new ParserException("Unknown OBJ operator: " + op, parser.LineNumber);
+                }
+            }
+            var glist = new List<Geometry>();
+            foreach (var g in submeshes.Where(p => !p.Key.StartsWith("level")).Select(pair => pair.Value.GetGeometry()))
+                glist.AddRange(g);
+            var mesh = new MeshData(glist);
+            return new CompositeResource(mesh);
+        }
+        
+        private IEnumerable<Material> LoadMaterialsFrom(string mtlFile)
+        {
+            var stream = Parent.Providers.LoadAsset(mtlFile);
+            var parser = new TextParser(new StreamReader(stream));
+            Material current = null;
+            while (parser.NextLine() != null)
+            {
+                if (parser.CurrentLine.StartsWith("#")) continue;
+                var op = parser.ReadString();
+                switch (op)
+                {
+                    case "newmtl":
+                        if (current != null) yield return current;
+                        var name = parser.ReadString();
+                        current = new Material(name);
+                        break;
+                    case "Ka":
+                        var ka = parser.ReadVector3();
+                        if (current != null) current.Ambient = new Color4(ka.X, ka.Y, ka.Z, 1.0f);
+                        break;
+                    case "Kd":
+                        var kd = parser.ReadVector3();
+                        if (current != null) current.Diffuse = new Color4(kd.X, kd.Y, kd.Z, 1.0f);
+                        break;
+                    case "Ks":
+                        var ks = parser.ReadVector3();
+                        if (current != null) current.Diffuse = new Color4(ks.X, ks.Y, ks.Z, 1.0f);
+                        break;
+                    case "Kd_map":
+                        var diffuseName = parser.ReadString();
+                        if (current != null) current.DiffuseMap = Parent.Load<Texture2D>(diffuseName);
+                        break;
+                }
+            }
+            if (current != null) yield return current;
+        }
+
+        public override bool Supports(string name, Stream stream)
+        {
+            return name.EndsWith(".obj");
+        }
+
+        private static IEnumerable<Triple> ParseFace(IList<string> indices)
+        {
+            for (var i = 0; i < indices.Count - 1; i++)
+            {
+                var parameters = indices[i].Split('/');
+                var vert = int.Parse(parameters[0]);
+                // Texcoords and normals are optional in .obj files
+                var tex = parameters[1] != "" ? int.Parse(parameters[1]) : 0;
+                var norm = parameters[2] != "" ? int.Parse(parameters[2]) : 0;
+                yield return new Triple(vert, norm, tex);
+            }
+        }
+    }
 }

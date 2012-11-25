@@ -10,6 +10,7 @@ using Calcifer.Engine.Graphics;
 using Calcifer.Engine.Graphics.Animation;
 using Calcifer.Engine.Graphics.Buffers;
 using Calcifer.Engine.Graphics.Primitives;
+using Calcifer.Utilities;
 using Calcifer.Utilities.Logging;
 using OpenTK;
 using OpenTK.Graphics;
@@ -50,7 +51,7 @@ namespace Demo.Import
             var builders = new Dictionary<string, GeometryBuilder>();
             while (parser.NextLine() != "end")
             {
-                var material = parser.ReadLine();
+                var material = parser.CurrentLine;
                 if (!builders.ContainsKey(material))
                 {
                     builders.Add(material, new GeometryBuilder());
@@ -62,8 +63,8 @@ namespace Demo.Import
                 var v3 = Transform(ReadVertex(parser));
                 builders[material].Add(v1, v2, v3);
             }
-            parser.ReadLine();
-            geometry.AddRange(builders.Select(builder => builder.Value.ToGeometry()));
+            foreach (var builder in builders)
+                geometry.AddRange(builder.Value.GetGeometry());
         }
 
         private Material GenerateMaterial(string name, string material)
@@ -152,15 +153,13 @@ namespace Demo.Import
                 switch (chunk)
                 {
                     case "triangles":
-                        LoadTriangles(name, parser, geometry);
                         break;
                     default:
                         Log.WriteLine(LogLevel.Warning, "ignoring chunk '{0}' at line {1}", chunk, parser.LineNumber);
                         while (parser.NextLine() != "end") { }
                         break;
                 }
-            // TODO: SMD settings (FPS, etc.) in external file
-            return new AnimationData(Path.GetFileNameWithoutExtension(name), 60.0f);
+            return null; //new AnimationData(Path.GetFileNameWithoutExtension(name), 60.0f);
         }
 
         public override bool Supports(string name, Stream stream)
