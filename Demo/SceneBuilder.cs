@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,7 @@ using ComponentKit;
 using ComponentKit.Model;
 using Jitter.Collision;
 using Jitter.Collision.Shapes;
+using Jitter.LinearMath;
 using OpenTK;
 
 namespace Demo
@@ -57,9 +59,16 @@ namespace Demo
                     return BuildLuaComponent(def);
                 case "luaStorage":
                     return BuildStorageComponent(def);
+                case "health":
+                    return BuildHealthComponent(def);
                 default:
                     throw new Exception("Unknown component type: " + def.Type);
             }
+        }
+
+        private IComponent BuildHealthComponent(ComponentDefinition def)
+        {
+            return new HealthComponent(int.Parse(def["hp"] ?? "100"));
         }
 
         private IComponent BuildMeshComponent(ComponentDefinition def)
@@ -86,13 +95,19 @@ namespace Demo
             switch (type)
             {
                 case "trimesh":
-                    var trimeshData = LoadAsset<PhysicsData>(map.Assets[def["physData"]]);
-                    var octree = new Octree(trimeshData.Positions, trimeshData.Triangles);
-                    shape = new MaterialMeshShape(trimeshData.Materials, octree);
+                    var physData = LoadAsset<PhysicsData>(map.Assets[def["physData"]]);
+                    var compound = physData.Shapes.Select(subShape => 
+                        new Octree(subShape.Positions, subShape.Triangles)).Select(octree => 
+                            new CompoundShape.TransformedShape(new TriangleMeshShape(octree), JMatrix.Identity, JVector.Zero)
+                            ).ToList();
+                    shape = new CompoundShape(compound);
                     break;
                 case "hull":
-                    var hullData = LoadAsset<PhysicsData>(map.Assets[def["physData"]]);
-                    shape = new ConvexHullShape(hullData.Positions);
+                    physData = LoadAsset<PhysicsData>(map.Assets[def["physData"]]);
+                    compound = physData.Shapes.Select(subShape => 
+                        new CompoundShape.TransformedShape(new ConvexHullShape(subShape.Positions), JMatrix.Identity, JVector.Zero)
+                        ).ToList();
+                    shape = new CompoundShape(compound);
                     break;
                 case "sphere":
                     shape = new SphereShape(float.Parse(def["radius"], CultureInfo.InvariantCulture));

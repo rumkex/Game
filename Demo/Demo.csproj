@@ -54,6 +54,9 @@
     <Reference Include="ComponentKit">
       <HintPath>..\References\ComponentKit.dll</HintPath>
     </Reference>
+    <Reference Include="Jitter">
+      <HintPath>..\References\Jitter.dll</HintPath>
+    </Reference>
     <Reference Include="OpenTK">
       <HintPath>..\References\OpenTK.dll</HintPath>
     </Reference>
@@ -80,10 +83,6 @@
     <ProjectReference Include="..\GameEngine\GameEngine.csproj">
       <Project>{b2b571be-47dc-41c8-8f9e-38f34c574249}</Project>
       <Name>GameEngine</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Jitter\Jitter.csproj">
-      <Project>{AA03EF1A-94F7-4D30-AB14-2092863FF923}</Project>
-      <Name>Jitter</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

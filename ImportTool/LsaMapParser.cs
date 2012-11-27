@@ -267,6 +267,10 @@ namespace ImportTool
             }
             builder.AddParameter("animations", sb.ToString());
             builder.EndComponent();
+
+            builder.BeginComponent("health");
+            builder.AddParameter("hp", "100");
+            builder.EndComponent();
         }
 
         private void ParseProjectile(BaseInfo info)
