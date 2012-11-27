@@ -7,7 +7,6 @@ using System.Text;
 using Calcifer.Engine.Content;
 using Calcifer.Engine.Content.Pipeline;
 using Calcifer.Engine.Graphics;
-using Calcifer.Engine.Graphics.Animation;
 using Calcifer.Engine.Graphics.Buffers;
 using Calcifer.Engine.Graphics.Primitives;
 using Calcifer.Utilities;
@@ -98,6 +97,7 @@ namespace Demo.Import
 
         private SkinnedVertex ReadVertex(TextParser parser)
         {
+            parser.NextLine();
             var baseBone = parser.ReadInt();
             var pos = parser.ReadVector3();
             var normal = parser.ReadVector3();
@@ -124,43 +124,6 @@ namespace Demo.Import
             return new SkinnedVertex(pos, normal, uv, normWeights.Keys.ToList(), normWeights.Values.ToList());
         }
 
-
-        public override bool Supports(string name, Stream stream)
-        {
-            var header = Encoding.ASCII.GetBytes("version 1");
-            var data = new byte[header.Length];
-            stream.Read(data, 0, data.Length);
-            return header.SequenceEqual(data);
-        }
-    }
-
-    public class SmdAnimLoader : ResourceLoader<AnimationData>
-    {
-        public SmdAnimLoader(ContentManager parent) : base(parent)
-        {
-        }
-
-        public override AnimationData Load(string name, Stream stream)
-        {
-            var parser = new TextParser(new StreamReader(stream)) { DetectQuotes = true };
-            var header = parser.NextLine();
-            Debug.Assert(header == "version 1", "header == \"version 1\"");
-
-            var geometry = new List<Geometry>();
-
-            string chunk;
-            while ((chunk = parser.NextLine()) != null)
-                switch (chunk)
-                {
-                    case "triangles":
-                        break;
-                    default:
-                        Log.WriteLine(LogLevel.Warning, "ignoring chunk '{0}' at line {1}", chunk, parser.LineNumber);
-                        while (parser.NextLine() != "end") { }
-                        break;
-                }
-            return null; //new AnimationData(Path.GetFileNameWithoutExtension(name), 60.0f);
-        }
 
         public override bool Supports(string name, Stream stream)
         {

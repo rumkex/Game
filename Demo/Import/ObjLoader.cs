@@ -6,6 +6,7 @@ using Calcifer.Engine.Content.Pipeline;
 using Calcifer.Engine.Graphics;
 using Calcifer.Engine.Graphics.Buffers;
 using Calcifer.Engine.Graphics.Primitives;
+using Calcifer.Engine.Physics;
 using Calcifer.Utilities;
 using Calcifer.Utilities.Logging;
 using OpenTK;
@@ -87,7 +88,7 @@ namespace Demo.Import
                             submeshes[currentMaterial].NextGeometry();
                         break;
                     case "mtllib":
-                        var mtlFile = parser.CurrentLine.Substring("mtllib".Length);
+                        var mtlFile = Path.Combine(Path.GetDirectoryName(name) ?? "", parser.CurrentLine.Substring("mtllib ".Length));
                         foreach (var mat in LoadMaterialsFrom(mtlFile))
                             materials.Add(mat.Name, mat);
                         break;
@@ -99,10 +100,15 @@ namespace Demo.Import
                 }
             }
             var glist = new List<Geometry>();
-            foreach (var g in submeshes.Where(p => !p.Key.StartsWith("level")).Select(pair => pair.Value.GetGeometry()))
-                glist.AddRange(g);
+            var plist = new List<Geometry>();
+            foreach (var builder in submeshes)
+            {
+                if (!builder.Key.EndsWith("level.png")) glist.AddRange(builder.Value.GetGeometry());
+                else plist.AddRange(builder.Value.GetGeometry());
+            }
             var mesh = new MeshData(glist);
-            return new CompositeResource(mesh);
+            var pmesh = new PhysicsData(plist);
+            return new CompositeResource(mesh, pmesh);
         }
         
         private IEnumerable<Material> LoadMaterialsFrom(string mtlFile)
@@ -113,6 +119,7 @@ namespace Demo.Import
             while (parser.NextLine() != null)
             {
                 if (parser.CurrentLine.StartsWith("#")) continue;
+                if (parser.CurrentLine.Length == 0) continue;
                 var op = parser.ReadString();
                 switch (op)
                 {
@@ -133,9 +140,9 @@ namespace Demo.Import
                         var ks = parser.ReadVector3();
                         if (current != null) current.Diffuse = new Color4(ks.X, ks.Y, ks.Z, 1.0f);
                         break;
-                    case "Kd_map":
+                    case "map_Kd":
                         var diffuseName = parser.ReadString();
-                        if (current != null) current.DiffuseMap = Parent.Load<Texture2D>(diffuseName);
+                        if (current != null) current.DiffuseMap = Parent.Load<Texture>(Path.Combine(Path.GetDirectoryName(mtlFile) ?? "", diffuseName));
                         break;
                 }
             }
@@ -149,7 +156,7 @@ namespace Demo.Import
 
         private static IEnumerable<Triple> ParseFace(IList<string> indices)
         {
-            for (var i = 0; i < indices.Count - 1; i++)
+            for (var i = 1; i < indices.Count - 1; i++)
             {
                 var parameters = indices[i].Split('/');
                 var vert = int.Parse(parameters[0]);

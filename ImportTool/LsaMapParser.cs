@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using Calcifer.Engine.Scenery;
 using Calcifer.Utilities;
 using Calcifer.Utilities.Logging;
@@ -34,7 +35,7 @@ namespace ImportTool
 
         private TextParser parser;
         private MapBuilder builder;
-        private string baseDir = "../assets";
+        private string baseDir = "../";
         private string baseName;
 
         public LsaMapParser()
@@ -88,7 +89,7 @@ namespace ImportTool
             parser.ReadLine();
             info.Name = parser.ReadLine();
             parser.ReadLine();
-            info.AssetName = parser.ReadLine().Remove(0, "assets/".Length);
+            info.AssetName = parser.ReadLine();
             parser.ReadLine();
             info.Translation = parser.ReadVector3(); // Translation vector of base Transform
             parser.ReadLine();
@@ -154,7 +155,7 @@ namespace ImportTool
             if (scriptName != "none")
             {
                 builder.BeginComponent("luaScript");
-                builder.AddParameter("sourceRef", scriptName);
+                builder.AddParameter("sourceRef", Path.Combine(baseDir, scriptName));
                 builder.EndComponent();
             } else if (len != 0)
             {
@@ -198,11 +199,7 @@ namespace ImportTool
             var dim = parser.ReadVector3();
             builder.BeginComponent("physics");            
             builder.AddParameter("type", "box");
-            builder.AddParameter("size", 
-                dim.X.ToString(CultureInfo.InvariantCulture) + ";" +
-                dim.Y.ToString(CultureInfo.InvariantCulture) + ";" + 
-                dim.Z.ToString(CultureInfo.InvariantCulture)
-            );
+            builder.AddParameter("size", dim.ConvertToString());
             builder.AddParameter("sensor", "true");
             builder.EndComponent();
         }
@@ -262,7 +259,7 @@ namespace ImportTool
             {
                 var animname = Path.GetFileNameWithoutExtension(anim);
                 var alias = fn + ".animation." + animname;
-                builder.AddAsset(alias, "AnimationData", false, anim.Remove(0, "../assets/".Length));
+                builder.AddAsset(alias, "AnimationData", false, anim.Remove(0, baseDir.Length));
                 
                 if (sb.Length != 0)
                     sb.Append(";");
@@ -337,17 +334,17 @@ namespace ImportTool
             if (addTransform)
             {                
                 builder.BeginComponent("transform");
-                builder.AddParameter("translation", t.X + ";" + t.Z + ";" + t.Y);
-                builder.AddParameter("rotation", r.X + ";" + r.Z + ";" + r.Y);
-                builder.AddParameter("scale", s.X + ";" + s.Z + ";" + s.Y);
+                builder.AddParameter("translation", t.ConvertToString());
+                builder.AddParameter("rotation", r.ConvertToString());
+                builder.AddParameter("scale", s.ConvertToString());
                 builder.EndComponent();
             }
 
             builder.BeginEntity(nodeName);
             builder.BeginComponent("transform");
-            builder.AddParameter("translation", t.X + ";" + t.Z + ";" + t.Y);
-            builder.AddParameter("rotation", r.X + ";" + r.Z + ";" + r.Y);
-            builder.AddParameter("scale", s.X + ";" + s.Z + ";" + s.Y);
+            builder.AddParameter("translation", t.ConvertToString());
+            builder.AddParameter("rotation", r.ConvertToString());
+            builder.AddParameter("scale", s.ConvertToString());
             builder.EndComponent();
             builder.EndEntity();
         }

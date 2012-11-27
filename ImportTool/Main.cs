@@ -31,7 +31,7 @@ namespace ImportTool
                     case "help":
                         ShowHelp();
                         return;
-                    case "conv":
+                    case "-c":
                     case "convert":
                         Convert(args [1]);
                         return;
