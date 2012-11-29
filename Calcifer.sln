@@ -2,6 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", "{C22F3D84-94AD-4428-A5FE-BB204F3A821D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{29B5C39B-C696-4E75-89E8-4D256C89D95B} = {29B5C39B-C696-4E75-89E8-4D256C89D95B}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameEngine", "GameEngine\GameEngine.csproj", "{B2B571BE-47DC-41C8-8F9E-38F34C574249}"
 EndProject
