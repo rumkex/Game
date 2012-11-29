@@ -94,8 +94,12 @@ namespace Demo
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
-            foreach (var updateable in updateables)
-                updateable.Update(e.Time);
+            var current = updateables.First;
+            while (current != null) // cannot use enumeration since triggers may fire and modify the collection
+            {
+                current.Value.Update(e.Time);
+                current = current.Next;
+            }
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
