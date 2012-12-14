@@ -28,6 +28,8 @@ namespace Demo.Import
 
     public class ObjLoader : ResourceLoader<CompositeResource>
     {
+        private static Matrix4 rot = Matrix4.CreateRotationX(-MathHelper.PiOver2) * Matrix4.CreateRotationY(MathHelper.PiOver2);
+
         public ObjLoader(ContentManager parent)
             : base(parent)
         {
@@ -37,7 +39,7 @@ namespace Demo.Import
         {
             var parser = new TextParser(new StreamReader(stream)) {DetectQuotes = true};
 
-            var submeshes = new Dictionary<string, GeometryBuilder>();
+            var builder = new GeometryBuilder();
             var materials = new Dictionary<string, Material>();
             var currentMaterial = "";
             var points = new List<Vector3>(new[] { Vector3.Zero });
@@ -45,7 +47,7 @@ namespace Demo.Import
             var texCoords = new List<Vector2>(new[] { Vector2.Zero });
             while (parser.NextLine() != null)
             {
-                if (parser.CurrentLine.StartsWith("#")) continue;
+                if (parser.CurrentLine.StartsWith("#") || parser.CurrentLine.Length == 0) continue;
                 var op = parser.ReadString();
                 switch (op)
                 {
@@ -55,37 +57,37 @@ namespace Demo.Import
 
                     case "v":
                         // Vertex
-                        points.Add(parser.ReadVector3());
+                        points.Add(Vector3.Transform(parser.ReadVector3(), rot));
                         break;
 
                     case "vt":
                         // TexCoord
+                        
                         texCoords.Add(parser.ReadVector2());
                         break;
 
                     case "vn":
                         // Normal
-                        normals.Add(parser.ReadVector3());
+                        normals.Add(Vector3.TransformNormal(parser.ReadVector3(), rot));
                         break;
 
                     case "f":
                         // Face
                         if (currentMaterial == null) break;
                         var f = ParseFace(parser.CurrentLine.Split(' '));
-                        submeshes[currentMaterial].Add(f.Select(t => new SkinnedVertex(points[t.X], normals[t.Y], texCoords[t.Z])).ToList(), normals.Count <= 1);
+                        var list = f.Select(t => new SkinnedVertex(points[t.X], normals[t.Y], texCoords[t.Z])).ToList();
+                        builder.Add(list, list[0].Normal.LengthSquared < 0.5f);
                         break;
 
                     case "o":
                     case "g":
-                        if (currentMaterial != null) submeshes[currentMaterial].NextGeometry();
+                        //builder.NextGeometry();
                         break;
                         
                     case "usemtl":
                         currentMaterial = parser.ReadString();
-                        if (!submeshes.ContainsKey(currentMaterial))
-                            submeshes.Add(currentMaterial, new GeometryBuilder {Material = materials[currentMaterial]});
-                        else
-                            submeshes[currentMaterial].NextGeometry();
+                        builder.NextGeometry();
+                        builder.Material = materials[currentMaterial];
                         break;
                     case "mtllib":
                         var mtlFile = Path.Combine(Path.GetDirectoryName(name) ?? "", parser.CurrentLine.Substring("mtllib ".Length));
@@ -101,10 +103,10 @@ namespace Demo.Import
             }
             var glist = new List<Geometry>();
             var plist = new List<Geometry>();
-            foreach (var builder in submeshes)
+            foreach (var g in builder.GetGeometry())
             {
-                if (!builder.Key.EndsWith("level.png")) glist.AddRange(builder.Value.GetGeometry());
-                else plist.AddRange(builder.Value.GetGeometry());
+                if (!g.Material.Name.EndsWith("level.png")) glist.Add(g);
+                else plist.Add(g);
             }
             var mesh = new MeshData(glist);
             var pmesh = new PhysicsData(plist);
@@ -138,7 +140,7 @@ namespace Demo.Import
                         break;
                     case "Ks":
                         var ks = parser.ReadVector3();
-                        if (current != null) current.Diffuse = new Color4(ks.X, ks.Y, ks.Z, 1.0f);
+                        if (current != null) current.Specular = new Color4(ks.X, ks.Y, ks.Z, 1.0f);
                         break;
                     case "map_Kd":
                         var diffuseName = parser.ReadString();
@@ -156,7 +158,7 @@ namespace Demo.Import
 
         private static IEnumerable<Triple> ParseFace(IList<string> indices)
         {
-            for (var i = 1; i < indices.Count - 1; i++)
+            for (var i = 1; i < indices.Count; i++)
             {
                 var parameters = indices[i].Split('/');
                 var vert = int.Parse(parameters[0]);

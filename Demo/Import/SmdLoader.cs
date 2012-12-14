@@ -47,23 +47,21 @@ namespace Demo.Import
 
         private void LoadTriangles(string name, TextParser parser, List<Geometry> geometry)
         {
-            var builders = new Dictionary<string, GeometryBuilder>();
+            var materials = new Dictionary<string, Material>();
+            var builder = new GeometryBuilder();
             while (parser.NextLine() != "end")
             {
                 var material = parser.CurrentLine;
-                if (!builders.ContainsKey(material))
-                {
-                    builders.Add(material, new GeometryBuilder());
-                    builders[material].Material = GenerateMaterial(name, material);
-                }
+                if (!materials.ContainsKey(material)) materials.Add(material, GenerateMaterial(name, material));
+                if (builder.Material != null && material != builder.Material.Name) builder.NextGeometry();
+                builder.Material = materials[material];
                 if (string.IsNullOrEmpty(material)) throw new ParserException("Unexpected end of SMD file", parser.LineNumber);
                 var v1 = Transform(ReadVertex(parser));
                 var v2 = Transform(ReadVertex(parser));
                 var v3 = Transform(ReadVertex(parser));
-                builders[material].Add(v1, v2, v3);
+                builder.Add(v1, v2, v3);
             }
-            foreach (var builder in builders)
-                geometry.AddRange(builder.Value.GetGeometry());
+            geometry.AddRange(builder.GetGeometry());
         }
 
         private Material GenerateMaterial(string name, string material)
