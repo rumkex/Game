@@ -58,8 +58,8 @@ namespace Demo.Import
                     var t = parser.ReadVector3();
                     var r = parser.ReadVector3();
                     var q = Quaternion.FromAxisAngle(Vector3.UnitX, r.X) *
-                            Quaternion.FromAxisAngle(Vector3.UnitZ, r.Z) *
-                            Quaternion.FromAxisAngle(Vector3.UnitY, r.Y);
+                            Quaternion.FromAxisAngle(Vector3.UnitY, r.Y) *
+                            Quaternion.FromAxisAngle(Vector3.UnitZ, r.Z);
                     var tr = new Transform(q, t);
                     curFrame.SetTransform(id, tr);
                     frames.Add(curFrame);

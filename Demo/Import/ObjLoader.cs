@@ -28,8 +28,6 @@ namespace Demo.Import
 
     public class ObjLoader : ResourceLoader<CompositeResource>
     {
-        private static Matrix4 rot = Matrix4.CreateRotationX(-MathHelper.PiOver2) * Matrix4.CreateRotationY(MathHelper.PiOver2);
-
         public ObjLoader(ContentManager parent)
             : base(parent)
         {
@@ -57,7 +55,7 @@ namespace Demo.Import
 
                     case "v":
                         // Vertex
-                        points.Add(Vector3.Transform(parser.ReadVector3(), rot));
+                        points.Add(parser.ReadVector3());
                         break;
 
                     case "vt":
@@ -68,7 +66,7 @@ namespace Demo.Import
 
                     case "vn":
                         // Normal
-                        normals.Add(Vector3.TransformNormal(parser.ReadVector3(), rot));
+                        normals.Add(parser.ReadVector3());
                         break;
 
                     case "f":

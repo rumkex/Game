@@ -56,43 +56,30 @@ namespace Demo.Import
                 if (builder.Material != null && material != builder.Material.Name) builder.NextGeometry();
                 builder.Material = materials[material];
                 if (string.IsNullOrEmpty(material)) throw new ParserException("Unexpected end of SMD file", parser.LineNumber);
-                var v1 = Transform(ReadVertex(parser));
-                var v2 = Transform(ReadVertex(parser));
-                var v3 = Transform(ReadVertex(parser));
+                var v1 = ReadVertex(parser);
+                var v2 = ReadVertex(parser);
+                var v3 = ReadVertex(parser);
                 builder.Add(v1, v2, v3);
             }
             geometry.AddRange(builder.GetGeometry());
         }
 
-        private Material GenerateMaterial(string name, string material)
+        private Material GenerateMaterial(string fileName, string material)
         {
             // THIS IS A NON-STANDARD IMPLEMENTATION
             // materials shouldn't be generated this way,
             // since studiomdl files are supposed to be acommpanied by material config
             // TODO: SMD material definition files
-            var path = Path.GetDirectoryName(name);
+            var path = Path.GetDirectoryName(fileName);
             if (path == null) return null;
             var diffuse = Parent.Load<Texture>(Path.Combine(path, material + ".png"));
-            return new Material(name) {
+            return new Material(material) {
 				Ambient = new Color4(0.2f, 0.2f, 0.2f, 1.0f), 
 				Diffuse = new Color4(0.6f, 0.6f, 0.6f, 1.0f), 
 				Specular = new Color4(0.2f, 0.2f, 0.2f, 1.0f), 
 				Shininess = 10.0f, DiffuseMap = diffuse};
         }
-
-        //Matrix to convert model to proper coordinates
-        private static Matrix4 rot = Matrix4.CreateRotationX(-MathHelper.PiOver2) * Matrix4.CreateRotationY(MathHelper.PiOver2);
-
-        private SkinnedVertex Transform(SkinnedVertex v)
-        {
-            Vector3 res;
-            Vector3.Transform(ref v.Position, ref rot, out res);
-            v.Position = res;
-            Vector3.Transform(ref v.Normal, ref rot, out res);
-            v.Normal = res;
-            return v;
-        }
-
+		
         private SkinnedVertex ReadVertex(TextParser parser)
         {
             parser.NextLine();
