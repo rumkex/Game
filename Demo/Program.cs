@@ -27,8 +27,6 @@ namespace Demo
         private Scenegraph scenegraph;
         private IEntityRecordCollection entities;
 
-        private Camera camera;
-
         private PhysicsService physicsService;
         private LuaService luaService;
 
@@ -38,7 +36,6 @@ namespace Demo
         {
             updateables = new LinkedList<IUpdateable>();
             entities = EntityRegistry.Current;
-            camera = new Camera(Matrix4.LookAt(5f * Vector3.One, Vector3.Zero, Vector3.UnitY));
         }
 
         static void Main(string[] args)
@@ -46,23 +43,18 @@ namespace Demo
             var startTime = DateTime.Now;
             Log.Output[LogLevel.Any] = (level, s) => Console.WriteLine("({0})[{1}] {2}", (DateTime.Now - startTime).TotalSeconds.ToString("0.00", CultureInfo.InvariantCulture), level, s);
             var g = new Game();
-            g.Run();
+            g.Run(60, 60);
         }
 
         private void InitGL()
         {
             GL.Enable(EnableCap.DepthTest);
-            GL.DepthFunc(DepthFunction.Gequal);
+            GL.DepthFunc(DepthFunction.Lequal);
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);
             GL.Enable(EnableCap.Texture2D);
             GL.Enable(EnableCap.VertexArray);
             GL.Enable(EnableCap.IndexArray);
-
-            GL.MatrixMode(MatrixMode.Projection);
-            var m = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver2, (float)ClientSize.Width / ClientSize.Height,1f, 100f);
-            GL.LoadMatrix(ref m);
-            GL.MatrixMode(MatrixMode.Modelview);
         }
 
         protected override void OnLoad(EventArgs e)
@@ -78,12 +70,16 @@ namespace Demo
             content.Loaders.Add(new SmdAnimLoader(content));
             
             var serializer = new XmlSerializer(typeof(Map));
-            var map = (Map) serializer.Deserialize(content.Providers.LoadAsset("assets/subset.xml"));
+            var map = (Map) serializer.Deserialize(content.Providers.LoadAsset("assets/test.map.xml"));
             var sceneBuilder = new SceneBuilder(content);
             sceneBuilder.CreateFromMap(map);
+			Console.WriteLine(Entity.Find("heroe").GetComponent<TransformComponent>().Scale);
 
             physicsService = new PhysicsService();
             luaService = new LuaService();
+
+            var viewer = Entity.Create("viewer", new CameraComponent(), new TransformComponent(), new KeyboardControllerComponent());
+            viewer.GetComponent<TransformComponent>().Translation = -5f * Vector3.UnitX + 1f * Vector3.UnitY;
 
             entities.SetTrigger(c => c is IUpdateable, (sender, args) => RegisterUpdateables(args.Components));
             entities.Synchronize();
@@ -94,6 +90,16 @@ namespace Demo
             {
                 scenegraph.Builder.AddModelFromEntity(entity);
             }
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            GL.Viewport(ClientSize);
+            GL.MatrixMode(MatrixMode.Projection);
+            var m = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver2, (float)ClientSize.Width / ClientSize.Height, 0.1f, 100f);
+            GL.LoadMatrix(ref m);
+            GL.MatrixMode(MatrixMode.Modelview);
         }
 
         private void RegisterUpdateables(IEnumerable<IComponent> components)
@@ -116,10 +122,18 @@ namespace Demo
             }
         }
 
+        private const int FpsSamples = 100;
+        private Queue<double> fpsQueue = new Queue<double>(FpsSamples);
+
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+            fpsQueue.Enqueue(1 / e.Time);
+            if (fpsQueue.Count >= FpsSamples) fpsQueue.Dequeue();
+            var fps = fpsQueue.Sum() / fpsQueue.Count;
+            Title = fps.ToString(CultureInfo.InvariantCulture);
+
             base.OnRenderFrame(e);
-            scenegraph.Render(new BaseRenderPass(camera));
+            scenegraph.Render(new BaseRenderPass(CameraComponent.Current));
             SwapBuffers();
         }
     }
