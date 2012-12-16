@@ -26,44 +26,46 @@ namespace Demo.Import
             var header = parser.NextLine();
             Debug.Assert(header.StartsWith("version 1"), "header.StartsWith(\"version 1\")");
 
+	        Pose baseFrame = null;
             var frames = new List<Pose>();
             string chunk;
             while ((chunk = parser.NextLine()) != null)
                 switch (chunk)
                 {
                     case "nodes":
-                        frames.Add(ParseNodes(parser));
+                        baseFrame = ParseNodes(parser);
                         break;
                     case "skeleton":
-                        ParseSkeleton(parser, frames);
+                        ParseSkeleton(parser, frames, baseFrame);
                         break;
                     default:
                         Log.WriteLine(LogLevel.Warning, "ignoring chunk '{0}' at line {1}", chunk, parser.LineNumber);
                         while (parser.NextLine() != "end") { }
                         break;
                 }
-            return new AnimationData(Path.GetFileNameWithoutExtension(name), 60.0f, frames);
+            return new AnimationData(Path.GetFileNameWithoutExtension(name), 30.0f, frames);
         }
 
-        private void ParseSkeleton(TextParser parser, List<Pose> frames)
+        private void ParseSkeleton(TextParser parser, List<Pose> frames, Pose baseFrame)
         {
+			var curFrame = new Pose(baseFrame);
             while (parser.NextLine() != "end")
             {
-                var curFrame = new Pose(frames.Last()); 
-                var frameHeader = parser.CurrentLine; // we don't really use it since variable rate animations aren't supported
-                for (int i = 0; i < curFrame.BoneCount; i++ )
-                {
+				var frameHeader = parser.CurrentLine; // we don't really use it since variable rate animations aren't supported
+				for (int i = 0; i < baseFrame.BoneCount; i++)
+				{
                     parser.NextLine();
                     var id = parser.ReadInt();
                     var t = parser.ReadVector3();
                     var r = parser.ReadVector3();
-                    var q = Quaternion.FromAxisAngle(Vector3.UnitX, r.X) *
+                    var q = Quaternion.FromAxisAngle(Vector3.UnitZ, r.Z) *
                             Quaternion.FromAxisAngle(Vector3.UnitY, r.Y) *
-                            Quaternion.FromAxisAngle(Vector3.UnitZ, r.Z);
+                            Quaternion.FromAxisAngle(Vector3.UnitX, r.X);
                     var tr = new Transform(q, t);
                     curFrame.SetTransform(id, tr);
-                    frames.Add(curFrame);
-                }
+				} 
+				curFrame = new Pose(curFrame);
+				frames.Add(curFrame);
             }
         }
 

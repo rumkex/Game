@@ -80,8 +80,9 @@ namespace Demo
         private IComponent BuildAnimationComponent(ComponentDefinition def)
         {
             var restPose = LoadAsset<AnimationData>(map.Assets[def["restPose"]]).Frames[0];
-            var type = def["controllerType"];
-            var c = new BlendAnimationController(restPose);
+			var type = def["controllerType"];
+			restPose.CalculateWorld();
+	        var c = new BlendAnimationController(restPose);
             if (def["animations"] != null)
             foreach (var animName in def["animations"].Split(';'))
                 c.AddAnimation(LoadAsset<AnimationData>(map.Assets[animName]));
