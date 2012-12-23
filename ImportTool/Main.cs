@@ -12,7 +12,6 @@ namespace ImportTool
         {
             Log.Output[LogLevel.Any] = (level, message) => Console.WriteLine("[{0}] {1}", level, message);
             Log.Verbosity = LogLevel.Any;
-            Log.WriteLine(LogLevel.Info, "Testing log.");
             var p = new MainClass();
             p.Run(args);
         }
@@ -30,17 +29,19 @@ namespace ImportTool
                 {
                     case "help":
                         ShowHelp();
-                        return;
+		                break;
                     case "-c":
                     case "convert":
                         Convert(args [1]);
-                        return;
+		                break;
                 }
             } catch (IndexOutOfRangeException)
             {
                 Console.WriteLine("Not enough arguments.");
                 return;
             }
+			Console.WriteLine("Press any key to continue...");
+	        Console.ReadKey(true);
         }
 
         void Convert(string filename)

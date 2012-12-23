@@ -63,6 +63,7 @@ namespace ImportTool
 
         private void SetupCamera()
         {
+			Log.WriteLine(LogLevel.Warning, "Camera setup not implemented");
             // TODO: Implement camera
             parser.ReadLine();
             var cameraPosition = parser.ReadVector3();
@@ -74,7 +75,8 @@ namespace ImportTool
         }
 
         private void SetupLight()
-        {
+		{
+			Log.WriteLine(LogLevel.Warning, "Lights not implemented");
             // TODO: Implement lights
             parser.ReadLine();
             var angleStart = parser.ReadFloat();
@@ -97,7 +99,7 @@ namespace ImportTool
             parser.ReadLine();
             
             builder.BeginEntity(info.Name);
-
+			Log.WriteLine(LogLevel.Info, "Parsing {0}...", info.Name);
             var posCount = parser.ReadInt();
             if (posCount > 0)
             {
@@ -176,7 +178,8 @@ namespace ImportTool
         }
         
         private void ParseMovableBox(BaseInfo info)
-        {
+		{
+			Log.WriteLine(LogLevel.Warning, "Movable boxes not implemented");
             // TODO: Do something with box entities
             parser.ReadLine(); // #box
             var dim = parser.ReadVector3();
@@ -185,7 +188,8 @@ namespace ImportTool
         }
 
         private void ParsePushableBox(BaseInfo info)
-        {
+		{
+			Log.WriteLine(LogLevel.Warning, "Pushable boxes not implemented");
             // TODO: Do something with box entities
             parser.ReadLine(); // #box
             var dim = parser.ReadVector3();
@@ -194,7 +198,8 @@ namespace ImportTool
         }
 
         private void ParseSensor(BaseInfo info)
-        {
+		{
+			Log.WriteLine(LogLevel.Warning, "Sensors not implemented");
             parser.ReadLine(); // #box
             var dim = parser.ReadVector3();
             builder.BeginComponent("physics");            
@@ -284,7 +289,8 @@ namespace ImportTool
         }
 
         private void ParseParticles(BaseInfo info)
-        {
+		{
+			Log.WriteLine(LogLevel.Warning, "Particles not implemented");
             // TODO: Implement particles
             parser.ReadLine();// #source_type
             var sourceType = parser.ReadInt();
