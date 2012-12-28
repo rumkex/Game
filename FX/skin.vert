@@ -34,9 +34,9 @@ void main(void)
     vertexNormal = normalize(gl_NormalMatrix * (mat3(skin[0].xyz,skin[1].xyz,skin[2].xyz) * inNormal));	
 	vec4 v = skin * vec4(inVertex, 1.0);
     // Calculate the light position for this vertex
-    lightPos = (gl_LightSource[0].position - v).xyz;
 	halfVector = normalize(gl_LightSource[0].halfVector.xyz);
 	vertexPos = (gl_ModelViewMatrix * v).xyz;
+    lightPos = gl_LightSource[0].position.xyz - vertexPos;
 	
     // Set the position of the current vertex
     gl_Position = gl_ModelViewProjectionMatrix * v;    
