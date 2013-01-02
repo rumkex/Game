@@ -61,12 +61,26 @@ namespace Demo
                     return BuildStorageComponent(def);
                 case "health":
                     return BuildHealthComponent(def);
+				case "sensor":
+					return BuildSensorComponent(def);
+				case "crate":
+					return BuildCrateComponent(def);
                 default:
                     throw new Exception("Unknown component type: " + def.Type);
             }
         }
 
-        private IComponent BuildHealthComponent(ComponentDefinition def)
+	    private IComponent BuildCrateComponent(ComponentDefinition def)
+	    {
+		    return new CrateComponent();
+	    }
+
+	    private IComponent BuildSensorComponent(ComponentDefinition def)
+	    {
+		    return new SensorComponent();
+	    }
+
+	    private IComponent BuildHealthComponent(ComponentDefinition def)
         {
             return new HealthComponent(int.Parse(def["hp"] ?? "100"));
         }

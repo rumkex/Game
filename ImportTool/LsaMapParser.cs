@@ -189,24 +189,35 @@ namespace ImportTool
 
         private void ParsePushableBox(BaseInfo info)
 		{
-			Log.WriteLine(LogLevel.Warning, "Pushable boxes not implemented");
-            // TODO: Do something with box entities
             parser.ReadLine(); // #box
             var dim = parser.ReadVector3();
             parser.ReadLine(); // #box offset
-            var off = parser.ReadVector3();
+			var off = parser.ReadVector3(); // TODO: implement offset
+
+			var fn = Path.GetFileNameWithoutExtension(info.AssetName);
+			builder.AddAsset(fn + ".mesh", "MeshData", true, info.AssetName);
+			builder.BeginComponent("mesh");
+			builder.AddParameter("meshData", fn + ".mesh");
+			builder.EndComponent();
+
+			builder.BeginComponent("physics");
+			builder.AddParameter("type", "box");
+			builder.AddParameter("size", dim.ConvertToString());
+			builder.EndComponent();
+			builder.BeginComponent("crate");
+			builder.EndComponent();
         }
 
         private void ParseSensor(BaseInfo info)
 		{
-			Log.WriteLine(LogLevel.Warning, "Sensors not implemented");
             parser.ReadLine(); // #box
-            var dim = parser.ReadVector3();
-            builder.BeginComponent("physics");            
-            builder.AddParameter("type", "box");
-            builder.AddParameter("size", dim.ConvertToString());
-            builder.AddParameter("sensor", "true");
-            builder.EndComponent();
+			var dim = parser.ReadVector3();
+			builder.BeginComponent("physics");
+			builder.AddParameter("type", "box");
+			builder.AddParameter("size", dim.ConvertToString());
+			builder.EndComponent();
+			builder.BeginComponent("sensor");
+			builder.EndComponent();
         }
 
         private void ParseProp(BaseInfo info)
