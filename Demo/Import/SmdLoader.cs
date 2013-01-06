@@ -72,7 +72,7 @@ namespace Demo.Import
             // TODO: SMD material definition files
             var path = Path.GetDirectoryName(fileName);
             if (path == null) return null;
-            var diffuse = Parent.Load<Texture>(Path.Combine(path, material + ".png"));
+            var diffuse = Parent.Load<Texture2D>(Path.Combine(path, material + ".png"));
             return new Material(material) {
 				Ambient = new Color4(0.2f, 0.2f, 0.2f, 1.0f), 
 				Diffuse = new Color4(0.6f, 0.6f, 0.6f, 1.0f), 

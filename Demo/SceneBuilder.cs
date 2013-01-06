@@ -16,6 +16,7 @@ using ComponentKit;
 using ComponentKit.Model;
 using Jitter.Collision;
 using Jitter.Collision.Shapes;
+using Jitter.Dynamics;
 using Jitter.LinearMath;
 using OpenTK;
 
@@ -39,59 +40,75 @@ namespace Demo
                 var name = entityEntry.Key;
                 var e = Entity.Create(name);
                 foreach (var componentEntry in entityEntry.Value)
-                    e.Add(BuildComponent(componentEntry.Value));
+                    BuildComponent(e, componentEntry.Value);
             }
         }
 
-        private IComponent BuildComponent(ComponentDefinition def)
+        private void BuildComponent(IEntityRecord e, ComponentDefinition def)
         {
             switch (def.Type)
             {
                 case "transform":
-                    return BuildTransformComponent(def);
-                case "mesh":
-                    return BuildMeshComponent(def);
+                    BuildTransformComponent(def, e);
+		            break;
+	            case "mesh":
+					BuildMeshComponent(def, e);
+		            break;
                 case "animation":
-                    return BuildAnimationComponent(def);
+					BuildAnimationComponent(def, e);
+		            break;
                 case "physics":
-                    return BuildPhysicsComponent(def);
+					BuildPhysicsComponent(def, e);
+		            break;
                 case "luaScript":
-                    return BuildLuaComponent(def);
+					BuildLuaComponent(def, e);
+		            break;
                 case "luaStorage":
-                    return BuildStorageComponent(def);
+					BuildStorageComponent(def, e);
+		            break;
                 case "health":
-                    return BuildHealthComponent(def);
+					BuildHealthComponent(def, e);
+		            break;
 				case "sensor":
-					return BuildSensorComponent(def);
+					BuildSensorComponent(def, e);
+		            break;
 				case "crate":
-					return BuildCrateComponent(def);
+					BuildCrateComponent(def, e);
+					break;
+				case "motion":
+					BuildMotionComponent(def, e);
+					break;
                 default:
                     throw new Exception("Unknown component type: " + def.Type);
             }
         }
 
-	    private IComponent BuildCrateComponent(ComponentDefinition def)
+	    private void BuildMotionComponent(ComponentDefinition def, IEntityRecord entityRecord)
 	    {
-		    return new CrateComponent();
+		    entityRecord.Add(new MotionComponent());
 	    }
 
-	    private IComponent BuildSensorComponent(ComponentDefinition def)
+	    private void BuildCrateComponent(ComponentDefinition def, IEntityRecord entityRecord)
 	    {
-		    return new SensorComponent();
+		    entityRecord.Add(new CrateComponent());
 	    }
 
-	    private IComponent BuildHealthComponent(ComponentDefinition def)
+	    private void BuildSensorComponent(ComponentDefinition def, IEntityRecord entityRecord)
+	    {
+		    entityRecord.Add(new SensorComponent());
+	    }
+
+	    private void BuildHealthComponent(ComponentDefinition def, IEntityRecord entityRecord)
         {
-            return new HealthComponent(int.Parse(def["hp"] ?? "100"));
+            entityRecord.Add(new HealthComponent(int.Parse(def["hp"] ?? "100")));
         }
 
-        private IComponent BuildMeshComponent(ComponentDefinition def)
+        private void BuildMeshComponent(ComponentDefinition def, IEntityRecord entityRecord)
         {
-            var meshData = LoadAsset<MeshData>(map.Assets[def["meshData"]]);
-            return meshData;
+            entityRecord.Add(LoadAsset<MeshData>(map.Assets[def["meshData"]]));
         }
 
-        private IComponent BuildAnimationComponent(ComponentDefinition def)
+        private void BuildAnimationComponent(ComponentDefinition def, IEntityRecord entityRecord)
         {
             var restPose = LoadAsset<AnimationData>(map.Assets[def["restPose"]]).Frames[0];
 			var type = def["controllerType"];
@@ -100,69 +117,80 @@ namespace Demo
             if (def["animations"] != null)
             foreach (var animName in def["animations"].Split(';'))
                 c.AddAnimation(LoadAsset<AnimationData>(map.Assets[animName]));
-            return c;
+	        entityRecord.Add(c);
         }
 
-        private IComponent BuildPhysicsComponent(ComponentDefinition def)
+        private void BuildPhysicsComponent(ComponentDefinition def, IEntityRecord entityRecord)
         {
-            bool isStatic = Convert.ToBoolean(def["static"] ?? "false");
             var type = def["type"];
-            Shape shape;
+	        RigidBody body;
             switch (type)
             {
                 case "trimesh":
                     var physData = LoadAsset<PhysicsData>(map.Assets[def["physData"]]);
-                    var compound = physData.Shapes.Select(subShape => 
-                        new Octree(subShape.Positions, subShape.Triangles)).Select(octree => 
-                            new CompoundShape.TransformedShape(new TriangleMeshShape(octree), JMatrix.Identity, JVector.Zero)
-                            ).ToList();
-                    shape = new CompoundShape(compound);
-                    break;
+		            var tris = physData.Shapes[0].Triangles.Select(t => new TriangleVertexIndices(t.X, t.Y, t.Z)).ToList();
+		            var verts = physData.Shapes[0].Vertices.Select(v => v.Position.ToJVector()).ToList();
+		            var materials = physData.Shapes.Select(g => new Tuple<int, int, string>(g.Offset, g.Count, g.Material.Name)).ToList();
+		            var octree = new Octree(verts, tris);
+		            entityRecord.Add(new TerrainComponent(materials, octree));
+		            Shape shape = new TriangleMeshShape(octree);
+					body = new RigidBody(shape) {Material = {Restitution = 0f, KineticFriction = 0f}};
+		            break;
                 case "hull":
                     physData = LoadAsset<PhysicsData>(map.Assets[def["physData"]]);
-                    compound = physData.Shapes.Select(subShape => 
-                        new CompoundShape.TransformedShape(new ConvexHullShape(subShape.Positions), JMatrix.Identity, JVector.Zero)
-                        ).ToList();
-                    shape = new CompoundShape(compound);
+		            shape = new MinkowskiSumShape(physData.Shapes.Select(
+						g => new ConvexHullShape(g.Vertices.Select(v => v.Position.ToJVector()).ToList())
+						));
+					body = new RigidBody(shape);
                     break;
                 case "sphere":
                     shape = new SphereShape(float.Parse(def["radius"], CultureInfo.InvariantCulture));
+					body = new RigidBody(shape);
                     break;
                 case "box":
                     var d = def["size"].ConvertToVector();
-                    shape = new BoxShape(d.ToJVector());
+		            shape = new BoxShape(2.0f*d.ToJVector());
+					body = new RigidBody(shape) {Position = JVector.Backward*d.Z};
                     break;
                 case "capsule":
-                    shape = new CapsuleShape(float.Parse(def["height"], CultureInfo.InvariantCulture), float.Parse(def["radius"], CultureInfo.InvariantCulture));
-                    break;
+		            var height = float.Parse(def["height"], CultureInfo.InvariantCulture);
+		            var radius = float.Parse(def["radius"], CultureInfo.InvariantCulture);
+		            shape = new CapsuleShape(height, radius);
+					body = new RigidBody(shape)
+						       {
+							       Position = JVector.Backward*(0.5f*height + radius),
+								   Orientation = JMatrix.CreateRotationX(MathHelper.PiOver2)
+						       };
+		            break;
                 default:
                     throw new Exception("Unknown shape: " + type);
-            }
-            return new PhysicsComponent(shape, isStatic);
+			}
+			bool isStatic = Convert.ToBoolean(def["static"] ?? "false");
+	        body.IsStatic = isStatic;
+            entityRecord.Add(new PhysicsComponent(body));
         }
 
-        private IComponent BuildLuaComponent(ComponentDefinition def)
+        private void BuildLuaComponent(ComponentDefinition def, IEntityRecord entityRecord)
         {
-            return new LuaComponent(def["source"] ?? File.ReadAllText(def["sourceRef"]));
+            entityRecord.Add(new LuaComponent(def["source"] ?? File.ReadAllText(def["sourceRef"])));
         }
 
-        private IComponent BuildStorageComponent(ComponentDefinition def)
+        private void BuildStorageComponent(ComponentDefinition def, IEntityRecord entityRecord)
         {
-            return new LuaStorageComponent(def["nodes"].Split(';'));
+            entityRecord.Add(new LuaStorageComponent(def["nodes"].Split(';')));
         }
 
-        private IComponent BuildTransformComponent(ComponentDefinition def)
+        private void BuildTransformComponent(ComponentDefinition def, IEntityRecord entityRecord)
         {
             var r = def["rotation"].ConvertToVector();
-            var c = new TransformComponent
+            entityRecord.Add(new TransformComponent
                         {
                             Translation = def["translation"].ConvertToVector(),
                             Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, r.X)*
                                        Quaternion.FromAxisAngle(Vector3.UnitY, r.Y)*
                                        Quaternion.FromAxisAngle(Vector3.UnitZ, r.Z),
                             Scale = def["scale"].ConvertToVector()
-                        };
-            return c;
+                        });
         }
 
         private T LoadAsset<T>(AssetReference r) where T: class, IResource

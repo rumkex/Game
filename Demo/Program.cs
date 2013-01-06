@@ -18,6 +18,7 @@ using ComponentKit.Model;
 using Demo.Import;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Input;
 
 namespace Demo
 {
@@ -43,7 +44,7 @@ namespace Demo
             var startTime = DateTime.Now;
             Log.Output[LogLevel.Any] = (level, s) => Console.WriteLine("({0})[{1}] {2}", (DateTime.Now - startTime).TotalSeconds.ToString("0.00", CultureInfo.InvariantCulture), level, s);
             var g = new Game();
-	        g.Run(30);
+            g.Run(60);
         }
 
         private void InitGL()
@@ -74,19 +75,18 @@ namespace Demo
             var map = (Map) serializer.Deserialize(content.Providers.LoadAsset("assets/test.map.xml"));
             var sceneBuilder = new SceneBuilder(content);
             sceneBuilder.CreateFromMap(map);
-			Console.WriteLine(Entity.Find("heroe").GetComponent<TransformComponent>().Scale);
 
             physicsService = new PhysicsService();
             luaService = new LuaService();
 
             var viewer = Entity.Create("viewer", new CameraComponent(), new TransformComponent(), new KeyboardControllerComponent());
-            viewer.GetComponent<TransformComponent>().Translation = -5f * Vector3.UnitX + 1f * Vector3.UnitY;
+            viewer.GetComponent<TransformComponent>().Translation = new Vector3(-5f, 1f, 2f);
 
             entities.SetTrigger(c => c is IUpdateable, (sender, args) => RegisterUpdateables(args.Components));
             entities.Synchronize();
 
             scenegraph = new Scenegraph();
-            scenegraph.Builder.AddLight(3.0f * Vector3.One, new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.7f * Vector3.One, 1.0f));
+            scenegraph.Builder.AddLight(5.0f * Vector3.UnitZ, new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.7f * Vector3.One, 1.0f));
             foreach (var entity in entities)
             {
                 scenegraph.Builder.AddModelFromEntity(entity);
@@ -115,6 +115,18 @@ namespace Demo
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
+			if (Keyboard[Key.P]) RenderHints<bool>.SetHint("debugPhysics", !RenderHints<bool>.GetHint("debugPhysics"));
+	        physicsService.Update(e.Time);
+
+			if (Keyboard[Key.Enter])
+			{
+				var player = Entity.Find("heroe");
+				var enemy = Entity.Find("soldier.000");
+				var dist = enemy.GetComponent<TransformComponent>().Translation -
+				          player.GetComponent<TransformComponent>().Translation;
+				player.GetComponent<MotionComponent>().SetTargetVelocity(Vector3.Normalize(dist));
+			}
+
             var current = updateables.First;
             while (current != null) // cannot use enumeration since triggers may fire and modify the collection
             {

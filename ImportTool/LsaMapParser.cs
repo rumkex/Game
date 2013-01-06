@@ -228,29 +228,20 @@ namespace ImportTool
             builder.AddAsset(fn + ".hull", "PhysicsData", true, info.AssetName);
             builder.BeginComponent("mesh");
             builder.AddParameter("meshData", fn + ".mesh");
-            builder.EndComponent();
-            if (fn != baseName)
-            {
-                builder.BeginComponent("physics");                
-                builder.AddParameter("type", "hull");
-                builder.AddParameter("physData", fn + ".hull");
-                builder.EndComponent();
-            } else
-            {
-                builder.BeginComponent("physics");            
-                builder.AddParameter("type", "trimesh");
-                builder.AddParameter("physData", fn + ".hull");
-                builder.AddParameter("static", "true");
-                builder.EndComponent();
-            }
+			builder.EndComponent();
+			builder.BeginComponent("physics");
+			builder.AddParameter("static", "true");
+			builder.AddParameter("physData", fn + ".hull");
+	        builder.AddParameter("type", info.AssetName.Contains("levels") ? "trimesh": "hull");
+	        builder.EndComponent();
         }
 
         private void ParseActor(BaseInfo info)
-        {
+		{
+			parser.ReadLine();
+			var h = parser.ReadFloat(); // capsule height
             parser.ReadLine();
             var r = parser.ReadFloat(); // capsule radius 
-            parser.ReadLine();
-            var h = parser.ReadFloat(); // capsule height
             builder.BeginComponent("physics");            
             builder.AddParameter("type", "capsule");
             builder.AddParameter("radius", r.ToString(CultureInfo.InvariantCulture));
@@ -282,7 +273,10 @@ namespace ImportTool
                 sb.Append(alias);
             }
             builder.AddParameter("animations", sb.ToString());
-            builder.EndComponent();
+			builder.EndComponent();
+
+			builder.BeginComponent("motion");
+			builder.EndComponent();
 
             builder.BeginComponent("health");
             builder.AddParameter("hp", "100");

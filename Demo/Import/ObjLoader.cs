@@ -101,7 +101,7 @@ namespace Demo.Import
             }
             var glist = new List<Geometry>();
             var plist = new List<Geometry>();
-            foreach (var g in builder.GetGeometry())
+			foreach (var g in builder.GetGeometry())
             {
                 if (!g.Material.Name.EndsWith("level.png")) glist.Add(g);
                 else plist.Add(g);
@@ -142,7 +142,7 @@ namespace Demo.Import
                         break;
                     case "map_Kd":
                         var diffuseName = parser.ReadString();
-                        if (current != null) current.DiffuseMap = Parent.Load<Texture>(Path.Combine(Path.GetDirectoryName(mtlFile) ?? "", diffuseName));
+                        if (current != null) current.DiffuseMap = Parent.Load<Texture2D>(Path.Combine(Path.GetDirectoryName(mtlFile) ?? "", diffuseName));
                         break;
                 }
             }
