@@ -44,6 +44,11 @@ namespace ImportTool
 
         public Map Load(string mapPath)
         {            
+			if (!File.Exists(mapPath))
+			{
+				Log.WriteLine(LogLevel.Fatal, "'{0}' was not found!");
+				return null;
+			}
             builder = new MapBuilder();
             baseName = Path.GetFileNameWithoutExtension(mapPath);
             var reader = new StreamReader(mapPath);

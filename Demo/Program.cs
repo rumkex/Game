@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using Calcifer.Engine.Components;
@@ -43,6 +44,21 @@ namespace Demo
         {
             var startTime = DateTime.Now;
             Log.Output[LogLevel.Any] = (level, s) => Console.WriteLine("({0})[{1}] {2}", (DateTime.Now - startTime).TotalSeconds.ToString("0.00", CultureInfo.InvariantCulture), level, s);
+			if (!Directory.Exists("../assets"))
+			{
+				Log.WriteLine(LogLevel.Fatal, "'../assets' directory not found");
+				return;
+			} 
+			if (!Directory.Exists("../scripts"))
+			{
+				Log.WriteLine(LogLevel.Fatal, "'../scripts' directory not found");
+				return;
+			}
+			if (!File.Exists("../assets/test.map.xml"))
+			{
+				Log.WriteLine(LogLevel.Fatal, "'../assets/test.map.xml' not found. ImportTool wasn't ran during build?");
+				return;
+			}
             var g = new Game();
             g.Run(60);
         }

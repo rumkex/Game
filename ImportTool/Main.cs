@@ -23,24 +23,29 @@ namespace ImportTool
                 Console.WriteLine("No command specified. Use 'help' for list of available commands");
                 return;
             }
-            try
-            {				
-                switch (args [0])
-                {
-                    case "help":
-                        ShowHelp();
-		                break;
-                    case "-c":
-                    case "convert":
-                        Convert(args [1]);
-		                break;
-                }
-            } catch (IndexOutOfRangeException)
-            {
-                Console.WriteLine("Not enough arguments.");
-                return;
-            }
-			Console.WriteLine("Press any key to continue...");
+	        try
+	        {
+		        switch (args[0])
+		        {
+			        case "help":
+				        ShowHelp();
+				        break;
+			        case "-c":
+			        case "convert":
+				        Convert(args[1]);
+				        break;
+		        }
+	        }
+	        catch (IndexOutOfRangeException)
+	        {
+		        Console.WriteLine("Not enough arguments.");
+		        return;
+	        }
+	        catch (Exception ex)
+	        {
+		        Log.WriteLine(LogLevel.Fatal, ex.Message);
+	        }
+	        Console.WriteLine("Press any key to continue...");
 	        Console.ReadKey(true);
         }
 
@@ -48,6 +53,7 @@ namespace ImportTool
         {
             var parser = new LsaMapParser();
             var map = parser.Load(filename);
+	        if (map == null) return;
             var serializer = new XmlSerializer(typeof(Map));
             using (var f = File.Open(filename + ".xml", FileMode.Create))
                 serializer.Serialize(f, map);
