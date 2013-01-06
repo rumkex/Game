@@ -109,6 +109,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <PropertyGroup>
-    <PostBuildEvent>ImportTool.exe -c "..\assets\test.map"</PostBuildEvent>
+    <PostBuildEvent>$(TargetPath) -c "$(SolutionDir)assets\test.map"</PostBuildEvent>
   </PropertyGroup>
 </Project>

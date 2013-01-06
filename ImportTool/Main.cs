@@ -45,8 +45,6 @@ namespace ImportTool
 	        {
 		        Log.WriteLine(LogLevel.Fatal, ex.Message);
 	        }
-	        Console.WriteLine("Press any key to continue...");
-	        Console.ReadKey(true);
         }
 
         void Convert(string filename)
