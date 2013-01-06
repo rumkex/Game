@@ -43,7 +43,8 @@ namespace ImportTool
         }
 
         public Map Load(string mapPath)
-        {            
+        {
+	        mapPath = mapPath.Replace('\\', '/');
 			if (!File.Exists(mapPath))
 			{
 				Log.WriteLine(LogLevel.Fatal, "'{0}' was not found!");
@@ -102,6 +103,7 @@ namespace ImportTool
             parser.ReadLine();
             info.Rotation = parser.ReadVector3(); // Euler angles of base Transform
             parser.ReadLine();
+			info.AssetName = info.AssetName.Replace('\\', '/');
             
             builder.BeginEntity(info.Name);
 			Log.WriteLine(LogLevel.Info, "Parsing {0}...", info.Name);
@@ -271,7 +273,7 @@ namespace ImportTool
             {
                 var animname = Path.GetFileNameWithoutExtension(anim);
                 var alias = fn + ".animation." + animname;
-                builder.AddAsset(alias, "AnimationData", false, anim.Remove(0, baseDir.Length));
+                builder.AddAsset(alias, "AnimationData", false, anim.Remove(0, baseDir.Length).Replace('\\', '/'));
                 
                 if (sb.Length != 0)
                     sb.Append(";");
