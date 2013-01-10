@@ -44,6 +44,8 @@ namespace Demo
         {
             var startTime = DateTime.Now;
             Log.Output[LogLevel.Any] = (level, s) => Console.WriteLine("({0})[{1}] {2}", (DateTime.Now - startTime).TotalSeconds.ToString("0.00", CultureInfo.InvariantCulture), level, s);
+			Console.SetBufferSize(120,300);
+			Console.SetWindowSize(120,40);
 			if (!Directory.Exists("../assets"))
 			{
 				Log.WriteLine(LogLevel.Fatal, "'../assets' directory not found");
