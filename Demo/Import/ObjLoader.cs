@@ -106,11 +106,54 @@ namespace Demo.Import
                 if (!g.Material.Name.EndsWith("level.png")) glist.Add(g);
                 else plist.Add(g);
             }
+            //RebuildGeometry(glist);
+            RebuildGeometry(plist);
             var mesh = new MeshData(glist);
             var pmesh = new PhysicsData(plist);
             return new CompositeResource(mesh, pmesh);
         }
         
+        private void RebuildGeometry(List<Geometry> source)
+        {
+            var vertindex = new Dictionary<ushort, ushort>();
+            var trilist = new List<Vector3i>();
+            var vlist = new List<SkinnedVertex>();
+            var tcount = 0;
+            foreach (var g in source)
+            {
+                for (var i = 0; i < g.Count; i++)
+                {
+                    var t = g.Triangles[tcount + i];
+                    t.X = RebuildVertex(t.X, g.Vertices, vlist, vertindex);
+                    t.Y = RebuildVertex(t.Y, g.Vertices, vlist, vertindex);
+                    t.Z = RebuildVertex(t.Z, g.Vertices, vlist, vertindex);
+                    trilist.Add(t);
+                }
+                g.Offset = tcount * Vector3i.Size;
+                tcount += g.Count;
+            }
+            var tarray = trilist.ToArray();
+            var varray = vlist.ToArray();
+            foreach (var g in source)
+            {
+                g.Triangles = tarray;
+                g.Vertices = varray;
+            }
+        }
+
+        private ushort RebuildVertex(ushort i, SkinnedVertex[] vertices, List<SkinnedVertex> vlist, Dictionary<ushort, ushort> vertindex)
+        {
+            if (vertindex.ContainsKey(i))
+                i = vertindex[i];
+            else
+            {
+                vertindex.Add(i, (ushort)vlist.Count);
+                i = (ushort)vlist.Count;
+                vlist.Add(vertices[i]);
+            }
+            return i;
+        }
+
         private IEnumerable<Material> LoadMaterialsFrom(string mtlFile)
         {
             var stream = Parent.Providers.LoadAsset(mtlFile);
