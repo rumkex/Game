@@ -177,7 +177,7 @@ namespace Demo
 
         private void BuildStorageComponent(ComponentDefinition def, IEntityRecord entityRecord)
         {
-            entityRecord.Add(new LuaStorageComponent(def["nodes"].Split(';')));
+            entityRecord.Add(new LuaStorageComponent(def["nodes"].Split(';').Select(Entity.Find)));
         }
 
         private void BuildTransformComponent(ComponentDefinition def, IEntityRecord entityRecord)
