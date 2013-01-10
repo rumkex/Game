@@ -36,4 +36,4 @@ Keep in mind that on Linux it might be necessary to run the following line after
 
 	mono ./bin/ImportTool.exe ../assets/test.map
 	
-After that, just run `bin/Game.exe` (use Mono on Linux)
+After that, just run `bin/Demo.exe` (use Mono on Linux)
