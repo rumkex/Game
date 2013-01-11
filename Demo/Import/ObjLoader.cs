@@ -106,7 +106,7 @@ namespace Demo.Import
                 if (!g.Material.Name.EndsWith("level.png")) glist.Add(g);
                 else plist.Add(g);
             }
-            //RebuildGeometry(glist);
+            RebuildGeometry(glist);
             RebuildGeometry(plist);
             var mesh = new MeshData(glist);
             var pmesh = new PhysicsData(plist);
@@ -123,7 +123,7 @@ namespace Demo.Import
             {
                 for (var i = 0; i < g.Count; i++)
                 {
-                    var t = g.Triangles[tcount + i];
+                    var t = g.Triangles[g.Offset / Vector3i.Size + i];
                     t.X = RebuildVertex(t.X, g.Vertices, vlist, vertindex);
                     t.Y = RebuildVertex(t.Y, g.Vertices, vlist, vertindex);
                     t.Z = RebuildVertex(t.Z, g.Vertices, vlist, vertindex);
@@ -143,15 +143,12 @@ namespace Demo.Import
 
         private ushort RebuildVertex(ushort i, SkinnedVertex[] vertices, List<SkinnedVertex> vlist, Dictionary<ushort, ushort> vertindex)
         {
-            if (vertindex.ContainsKey(i))
-                i = vertindex[i];
-            else
+            if (!vertindex.ContainsKey(i))
             {
                 vertindex.Add(i, (ushort)vlist.Count);
-                i = (ushort)vlist.Count;
                 vlist.Add(vertices[i]);
             }
-            return i;
+            return vertindex[i];
         }
 
         private IEnumerable<Material> LoadMaterialsFrom(string mtlFile)
