@@ -190,7 +190,7 @@ namespace ImportTool
             parser.ReadLine(); // #box
             var dim = parser.ReadVector3();
             parser.ReadLine(); // #box offset
-            var off = parser.ReadVector3(); // TODO: implement offset
+            var off = parser.ReadVector3();
 
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
             builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
@@ -201,6 +201,7 @@ namespace ImportTool
             builder.BeginComponent("physics");
             builder.AddParameter("type", "box");
             builder.AddParameter("size", dim.ConvertToString());
+            builder.AddParameter("offset", off.ConvertToString());
             builder.EndComponent();
             builder.BeginComponent("movable");
             builder.EndComponent();
@@ -211,7 +212,7 @@ namespace ImportTool
             parser.ReadLine(); // #box
             var dim = parser.ReadVector3();
             parser.ReadLine(); // #box offset
-			var off = parser.ReadVector3(); // TODO: implement offset
+			var off = parser.ReadVector3();
 
 			var fn = Path.GetFileNameWithoutExtension(info.AssetName);
             builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
@@ -221,7 +222,8 @@ namespace ImportTool
 
 			builder.BeginComponent("physics");
 			builder.AddParameter("type", "box");
-			builder.AddParameter("size", dim.ConvertToString());
+            builder.AddParameter("size", dim.ConvertToString());
+            builder.AddParameter("offset", off.ConvertToString());
 			builder.EndComponent();
 			builder.BeginComponent("crate");
 			builder.EndComponent();

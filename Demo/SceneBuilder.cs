@@ -165,8 +165,9 @@ namespace Demo
                     break;
                 case "box":
                     var d = def["size"].ConvertToVector();
+                    var offset = (def["offset"] ?? "0;0;0").ConvertToVector();
 		            shape = new BoxShape(2.0f*d.ToJVector());
-					body = new RigidBody(shape) {Position = JVector.Backward*d.Z};
+					body = new RigidBody(shape) {Position = offset.ToJVector()};
                     break;
                 case "capsule":
 		            var height = float.Parse(def["height"], CultureInfo.InvariantCulture);
