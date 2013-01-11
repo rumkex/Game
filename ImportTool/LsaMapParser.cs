@@ -47,7 +47,7 @@ namespace ImportTool
 	        mapPath = mapPath.Replace('\\', '/');
 			if (!File.Exists(mapPath))
 			{
-				Log.WriteLine(LogLevel.Fatal, "'{0}' was not found!");
+				Log.WriteLine(LogLevel.Fatal, "'{0}' was not found!", mapPath);
 				return null;
 			}
             builder = new MapBuilder();
@@ -186,12 +186,24 @@ namespace ImportTool
         
         private void ParseMovableBox(BaseInfo info)
 		{
-			Log.WriteLine(LogLevel.Warning, "Movable boxes not implemented");
             // TODO: Do something with box entities
             parser.ReadLine(); // #box
             var dim = parser.ReadVector3();
             parser.ReadLine(); // #box offset
-            var off = parser.ReadVector3();
+            var off = parser.ReadVector3(); // TODO: implement offset
+
+            var fn = Path.GetFileNameWithoutExtension(info.AssetName);
+            builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
+            builder.BeginComponent("mesh");
+            builder.AddParameter("meshData", fn + ".mesh");
+            builder.EndComponent();
+
+            builder.BeginComponent("physics");
+            builder.AddParameter("type", "box");
+            builder.AddParameter("size", dim.ConvertToString());
+            builder.EndComponent();
+            builder.BeginComponent("movable");
+            builder.EndComponent();
         }
 
         private void ParsePushableBox(BaseInfo info)
@@ -202,7 +214,7 @@ namespace ImportTool
 			var off = parser.ReadVector3(); // TODO: implement offset
 
 			var fn = Path.GetFileNameWithoutExtension(info.AssetName);
-			builder.AddAsset(fn + ".mesh", "MeshData", true, info.AssetName);
+            builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
 			builder.BeginComponent("mesh");
 			builder.AddParameter("meshData", fn + ".mesh");
 			builder.EndComponent();
@@ -288,6 +300,12 @@ namespace ImportTool
             builder.BeginComponent("health");
             builder.AddParameter("hp", "100");
             builder.EndComponent();
+
+            if (info.Name == "heroe")
+            {
+                builder.BeginComponent("player");
+                builder.EndComponent();
+            }
         }
 
         private void ParseProjectile(BaseInfo info)

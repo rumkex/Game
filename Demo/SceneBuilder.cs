@@ -77,13 +77,29 @@ namespace Demo
 					break;
 				case "motion":
 					BuildMotionComponent(def, e);
-					break;
+                    break;
+                case "movable":
+                    BuildMovableComponent(def, e);
+                    break;
+                case "player":
+                    BuildPlayerStateComponent(def, e);
+                    break;
                 default:
                     throw new Exception("Unknown component type: " + def.Type);
             }
         }
 
-	    private void BuildMotionComponent(ComponentDefinition def, IEntityRecord entityRecord)
+        private void BuildPlayerStateComponent(ComponentDefinition def, IEntityRecord entityRecord)
+        {
+            entityRecord.Add(new PlayerStateComponent());
+        }
+
+        private void BuildMovableComponent(ComponentDefinition def, IEntityRecord entityRecord)
+        {
+            entityRecord.Add(new WaypointMovableComponent());
+        }
+
+        private void BuildMotionComponent(ComponentDefinition def, IEntityRecord entityRecord)
 	    {
 		    entityRecord.Add(new MotionComponent());
 	    }
@@ -177,7 +193,7 @@ namespace Demo
 
         private void BuildStorageComponent(ComponentDefinition def, IEntityRecord entityRecord)
         {
-            entityRecord.Add(new LuaStorageComponent(def["nodes"].Split(';').Select(Entity.Find)));
+            entityRecord.Add(new WaypointComponent(def["nodes"].Split(';').Select(Entity.Find)));
         }
 
         private void BuildTransformComponent(ComponentDefinition def, IEntityRecord entityRecord)
