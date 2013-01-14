@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calcifer.Engine.Content;
@@ -72,7 +73,7 @@ namespace Demo.Import
                     case "f":
                         // Face
                         if (currentMaterial == null) break;
-                        var f = ParseFace(parser.CurrentLine.Split(' '));
+                        var f = ParseFace(parser.CurrentLine.Split(new[]{' '}, StringSplitOptions.RemoveEmptyEntries));
                         var list = f.Select(t => new SkinnedVertex(points[t.X], normals[t.Y], texCoords[t.Z])).ToList();
                         builder.Add(list, list[0].Normal.LengthSquared < 0.5f);
                         break;
