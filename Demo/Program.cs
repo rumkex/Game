@@ -135,16 +135,6 @@ namespace Demo
             base.OnUpdateFrame(e);
 			if (Keyboard[Key.P]) RenderHints<bool>.SetHint("debugPhysics", !RenderHints<bool>.GetHint("debugPhysics"));
 	        physicsService.Update(e.Time);
-
-			if (Keyboard[Key.Enter])
-			{
-				var player = Entity.Find("heroe");
-				var enemy = Entity.Find("soldier.000");
-				var dist = enemy.GetComponent<TransformComponent>().Translation -
-				          player.GetComponent<TransformComponent>().Translation;
-				player.GetComponent<MotionComponent>().SetTargetVelocity(Vector3.Normalize(dist));
-			}
-
             var current = updateables.First;
             while (current != null) // cannot use enumeration since triggers may fire and modify the collection
             {
