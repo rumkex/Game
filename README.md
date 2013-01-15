@@ -8,7 +8,7 @@ Prerequisites
 
 First, you need to checkout [this](https://lsa-svn.svn.sourceforge.net/svnroot/lsa-svn) Subversion repository since it contains all the assets required for the game.
 
-**Building requires both "assets" and "scripts" folders to be present in the 
+**Building requires "assets", "interface" and "scripts" folders to be present in the 
 solution directory**, so the directory layout is as follows:
 
 	/<solution>/Demo
@@ -17,6 +17,7 @@ solution directory**, so the directory layout is as follows:
 	/<solution>/FX
 	/<solution>/assets
 	/<solution>/scripts
+	/<solution>/interface
 
 Building
 ========
