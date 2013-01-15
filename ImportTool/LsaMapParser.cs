@@ -186,7 +186,6 @@ namespace ImportTool
         
         private void ParseMovableBox(BaseInfo info)
 		{
-            // TODO: Do something with box entities
             parser.ReadLine(); // #box
             var dim = parser.ReadVector3();
             parser.ReadLine(); // #box offset
@@ -231,6 +230,12 @@ namespace ImportTool
 
         private void ParseSensor(BaseInfo info)
 		{
+		    var fn = Path.GetFileNameWithoutExtension(info.AssetName);
+		    builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
+		    builder.BeginComponent("mesh");
+		    builder.AddParameter("meshData", fn + ".mesh");
+		    builder.EndComponent();
+		    
             parser.ReadLine(); // #box
 			var dim = parser.ReadVector3();
 			builder.BeginComponent("physics");
