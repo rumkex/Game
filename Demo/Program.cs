@@ -31,6 +31,7 @@ namespace Demo
 
         private PhysicsService physicsService;
         private LuaService luaService;
+        private StateService stateService;
 
         private LinkedList<IUpdateable> updateables;
 
@@ -96,11 +97,13 @@ namespace Demo
 
             physicsService = new PhysicsService();
             luaService = new LuaService();
+            stateService = new StateService();
 
             var viewer = Entity.Create("viewer", new CameraComponent(), new TransformComponent(), new KeyboardControllerComponent());
             viewer.GetComponent<TransformComponent>().Translation = new Vector3(-5f, 1f, 2f);
 
             entities.SetTrigger(c => c is IUpdateable, (sender, args) => RegisterUpdateables(args.Components));
+            entities.SetTrigger(c => c is ISaveable, (sender, args) => stateService.Synchronize(args.Components));
             entities.SetTrigger(c => c is PhysicsComponent, (sender, args) => physicsService.Synchronize(args.Components));
             entities.SetTrigger(c => c is LuaComponent, (sender, args) => luaService.Synchronize(args.Components));
             entities.Synchronize();
@@ -136,6 +139,10 @@ namespace Demo
         {
             base.OnUpdateFrame(e);
 			if (Keyboard[Key.P]) RenderHints<bool>.SetHint("debugPhysics", !RenderHints<bool>.GetHint("debugPhysics"));
+
+            if (Keyboard[Key.F5]) stateService.SaveState();
+            if (Keyboard[Key.F6]) stateService.RestoreState();
+
 	        physicsService.Update(e.Time);
             var current = updateables.First;
             while (current != null) // cannot use enumeration since triggers may fire and modify the collection
