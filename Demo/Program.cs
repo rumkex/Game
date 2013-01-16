@@ -108,6 +108,13 @@ namespace Demo
             entities.SetTrigger(c => c is LuaComponent, (sender, args) => luaService.Synchronize(args.Components));
             entities.Synchronize();
 
+            Keyboard.KeyDown += (sender, args) =>
+                                    {
+                                        if (args.Key == Key.P) RenderHints<bool>.SetHint("debugPhysics", !RenderHints<bool>.GetHint("debugPhysics"));
+                                        if (args.Key == Key.F5) stateService.SaveState();
+                                        if (args.Key == Key.F6) stateService.RestoreState();
+                                    };
+
             scenegraph = new Scenegraph();
             scenegraph.Builder.AddLight(5.0f * Vector3.UnitZ, new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.7f * Vector3.One, 1.0f));
             foreach (var entity in entities)
@@ -138,10 +145,6 @@ namespace Demo
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
-			if (Keyboard[Key.P]) RenderHints<bool>.SetHint("debugPhysics", !RenderHints<bool>.GetHint("debugPhysics"));
-
-            if (Keyboard[Key.F5]) stateService.SaveState();
-            if (Keyboard[Key.F6]) stateService.RestoreState();
 
 	        physicsService.Update(e.Time);
             var current = updateables.First;
