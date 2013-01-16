@@ -101,6 +101,8 @@ namespace Demo
             viewer.GetComponent<TransformComponent>().Translation = new Vector3(-5f, 1f, 2f);
 
             entities.SetTrigger(c => c is IUpdateable, (sender, args) => RegisterUpdateables(args.Components));
+            entities.SetTrigger(c => c is PhysicsComponent, (sender, args) => physicsService.Synchronize(args.Components));
+            entities.SetTrigger(c => c is LuaComponent, (sender, args) => luaService.Synchronize(args.Components));
             entities.Synchronize();
 
             scenegraph = new Scenegraph();
