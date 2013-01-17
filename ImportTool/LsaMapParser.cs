@@ -305,7 +305,7 @@ namespace ImportTool
 			builder.EndComponent();
 
             builder.BeginComponent("health");
-            builder.AddParameter("hp", "100");
+            builder.AddParameter("hp", info.Name == "heroe" ? "100": "3");
             builder.EndComponent();
 
             if (info.Name == "heroe")
