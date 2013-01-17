@@ -123,7 +123,8 @@ namespace ImportTool
                 builder.BeginComponent("luaStorage");
                 builder.AddParameter("nodes", sb.ToString());
                 builder.EndComponent();
-            } 
+            }
+
             parser.ReadLine();
             var type = parser.ReadLine();
             switch (type)
@@ -153,6 +154,9 @@ namespace ImportTool
                     Log.WriteLine(LogLevel.Fatal, "unknown LSA object type: " + type);
                     break;
             }
+
+            builder.BeginComponent("render");
+            builder.EndComponent();
 
             parser.ReadLine();// #script_filename_whatever
             var scriptName = parser.ReadLine();

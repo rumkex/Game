@@ -48,6 +48,9 @@ namespace Demo
         {
             switch (def.Type)
             {
+                case "render":
+                    BuildRenderComponent(def, e);
+                    break;
                 case "transform":
                     BuildTransformComponent(def, e);
 		            break;
@@ -87,6 +90,11 @@ namespace Demo
                 default:
                     throw new Exception("Unknown component type: " + def.Type);
             }
+        }
+
+        private void BuildRenderComponent(ComponentDefinition def, IEntityRecord entityRecord)
+        {
+            entityRecord.Add(new RenderComponent());
         }
 
         private void BuildPlayerStateComponent(ComponentDefinition def, IEntityRecord entityRecord)

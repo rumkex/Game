@@ -26,12 +26,14 @@ namespace Demo
     public class Game: GameWindow
     {
         private ContentManager content;
-        private Scenegraph scenegraph;
         private IEntityRecordCollection entities;
 
+        private RenderService renderService;
         private PhysicsService physicsService;
         private LuaService luaService;
         private StateService stateService;
+
+        private RenderPass basePass;
 
         private LinkedList<IUpdateable> updateables;
 
@@ -95,6 +97,7 @@ namespace Demo
             var sceneBuilder = new SceneBuilder(content);
             sceneBuilder.CreateFromMap(map);
 
+            renderService = new RenderService();
             physicsService = new PhysicsService();
             luaService = new LuaService();
             stateService = new StateService();
@@ -103,6 +106,7 @@ namespace Demo
             viewer.GetComponent<TransformComponent>().Translation = new Vector3(-5f, 1f, 2f);
 
             entities.SetTrigger(c => c is IUpdateable, (sender, args) => RegisterUpdateables(args.Components));
+            entities.SetTrigger(c => c is RenderComponent, (sender, args) => renderService.Synchronize(args.Components));
             entities.SetTrigger(c => c is ISaveable, (sender, args) => stateService.Synchronize(args.Components));
             entities.SetTrigger(c => c is PhysicsComponent, (sender, args) => physicsService.Synchronize(args.Components));
             entities.SetTrigger(c => c is LuaComponent, (sender, args) => luaService.Synchronize(args.Components));
@@ -115,12 +119,8 @@ namespace Demo
                                         if (args.Key == Key.F6) stateService.RestoreState();
                                     };
 
-            scenegraph = new Scenegraph();
-            scenegraph.Builder.AddLight(5.0f * Vector3.UnitZ, new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.7f * Vector3.One, 1.0f));
-            foreach (var entity in entities)
-            {
-                scenegraph.Builder.AddModelFromEntity(entity);
-            }
+            basePass = new BaseRenderPass();
+            renderService.AddLight(5.0f * Vector3.UnitZ, new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.7f * Vector3.One, 1.0f));
         }
 
         protected override void OnResize(EventArgs e)
@@ -166,7 +166,7 @@ namespace Demo
             Title = fps.ToString(CultureInfo.InvariantCulture);
 
             base.OnRenderFrame(e);
-            scenegraph.Render(new BaseRenderPass(CameraComponent.Current));
+            renderService.Render(basePass, CameraComponent.Current);
             SwapBuffers();
         }
     }
