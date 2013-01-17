@@ -1,7 +1,7 @@
 Overview
 ========
 
-This project is meant to be a replacement to [LSA](http://sourceforge.net/projects/lsa-svn/)
+This project is meant to be a replacement to [LSA](http://sourceforge.net/projects/lsa-svn/).
 
 Prerequisites
 =============
@@ -38,3 +38,9 @@ Keep in mind that on Linux it might be necessary to run the following line after
 	mono ./bin/ImportTool.exe ../assets/test.map
 	
 After that, just run `bin/Demo.exe` (use Mono on Linux)
+
+Getting Binaries
+================
+
+[Compiled binaries](https://www.dropbox.com/sh/699dl4tfmzd04cm/FgHLxyvrJ1) are also
+available. However, you still need the repository mentioned in "Prerequisites" section.
