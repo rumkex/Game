@@ -36,11 +36,6 @@ namespace ImportTool
         private TextParser parser;
         private MapBuilder builder;
         private string baseDir = "../";
-        private string baseName;
-
-        public LsaMapParser()
-        {
-        }
 
         public Map Load(string mapPath)
         {
@@ -51,7 +46,6 @@ namespace ImportTool
 				return null;
 			}
             builder = new MapBuilder();
-            baseName = Path.GetFileNameWithoutExtension(mapPath);
             var reader = new StreamReader(mapPath);
             parser = new TextParser(reader) {AutoMultiline = true};
 
@@ -104,7 +98,7 @@ namespace ImportTool
             info.Rotation = parser.ReadVector3(); // Euler angles of base Transform
             parser.ReadLine();
 			info.AssetName = info.AssetName.Replace('\\', '/');
-            
+
             builder.BeginEntity(info.Name);
 			Log.WriteLine(LogLevel.Info, "Parsing {0}...", info.Name);
             var posCount = parser.ReadInt();
@@ -125,6 +119,12 @@ namespace ImportTool
                 builder.EndComponent();
             }
 
+            var fn = Path.GetFileNameWithoutExtension(info.AssetName);
+            builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
+            builder.BeginComponent("mesh");
+            builder.AddParameter("meshData", fn + ".mesh");
+            builder.EndComponent();
+
             parser.ReadLine();
             var type = parser.ReadLine();
             switch (type)
@@ -136,19 +136,19 @@ namespace ImportTool
                     ParseProp(info);
                     break;
                 case ObjectType.Projectile:
-                    ParseProjectile(info);
+                    ParseProjectile();
                     break;
                 case ObjectType.Particles:
-                    ParseParticles(info);
+                    ParseParticles();
                     break;
                 case ObjectType.Sensor:
-                    ParseSensor(info);
+                    ParseSensor();
                     break;
                 case ObjectType.PushingBox:
-                    ParsePushableBox(info);
+                    ParsePushableBox();
                     break;
                 case ObjectType.MovingBox:
-                    ParseMovableBox(info);
+                    ParseMovableBox();
                     break;
                 default:
                     Log.WriteLine(LogLevel.Fatal, "unknown LSA object type: " + type);
@@ -187,61 +187,40 @@ namespace ImportTool
 
             builder.EndEntity();
         }
-        
-        private void ParseMovableBox(BaseInfo info)
-		{
+
+        private void ParseBox()
+        {
             parser.ReadLine(); // #box
             var dim = parser.ReadVector3();
             parser.ReadLine(); // #box offset
             var off = parser.ReadVector3();
-
-            var fn = Path.GetFileNameWithoutExtension(info.AssetName);
-            builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
-            builder.BeginComponent("mesh");
-            builder.AddParameter("meshData", fn + ".mesh");
-            builder.EndComponent();
-
+            
             builder.BeginComponent("physics");
             builder.AddParameter("type", "box");
             builder.AddParameter("size", dim.ConvertToString());
             builder.AddParameter("offset", off.ConvertToString());
             builder.EndComponent();
+        }
+        
+        private void ParseMovableBox()
+		{
+            ParseBox();
             builder.BeginComponent("movable");
             builder.EndComponent();
         }
 
-        private void ParsePushableBox(BaseInfo info)
+        private void ParsePushableBox()
 		{
-            parser.ReadLine(); // #box
-            var dim = parser.ReadVector3();
-            parser.ReadLine(); // #box offset
-			var off = parser.ReadVector3();
-
-			var fn = Path.GetFileNameWithoutExtension(info.AssetName);
-            builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
-			builder.BeginComponent("mesh");
-			builder.AddParameter("meshData", fn + ".mesh");
-			builder.EndComponent();
-
-			builder.BeginComponent("physics");
-			builder.AddParameter("type", "box");
-            builder.AddParameter("size", dim.ConvertToString());
-            builder.AddParameter("offset", off.ConvertToString());
-			builder.EndComponent();
+            ParseBox();
 			builder.BeginComponent("crate");
 			builder.EndComponent();
         }
 
-        private void ParseSensor(BaseInfo info)
+        private void ParseSensor()
 		{
-		    var fn = Path.GetFileNameWithoutExtension(info.AssetName);
-		    builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
-		    builder.BeginComponent("mesh");
-		    builder.AddParameter("meshData", fn + ".mesh");
-		    builder.EndComponent();
-		    
             parser.ReadLine(); // #box
 			var dim = parser.ReadVector3();
+
 			builder.BeginComponent("physics");
 			builder.AddParameter("type", "box");
 			builder.AddParameter("size", dim.ConvertToString());
@@ -254,16 +233,15 @@ namespace ImportTool
         {
             // No additional info here
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
-            builder.AddAsset(fn + ".mesh", "MeshData", true, info.AssetName);
-            builder.AddAsset(fn + ".hull", "PhysicsData", true, info.AssetName);
-            builder.BeginComponent("mesh");
-            builder.AddParameter("meshData", fn + ".mesh");
-			builder.EndComponent();
-			builder.BeginComponent("physics");
-			builder.AddParameter("static", "true");
-			builder.AddParameter("physData", fn + ".hull");
-	        builder.AddParameter("type", info.AssetName.Contains("levels") ? "trimesh": "hull");
-	        builder.EndComponent();
+            if (info.AssetName.EndsWith(".obj"))
+            {
+                builder.AddAsset(fn + ".hull", "PhysicsData", true, info.AssetName);
+                builder.BeginComponent("physics");
+                builder.AddParameter("static", "true");
+                builder.AddParameter("physData", fn + ".hull");
+                builder.AddParameter("type", info.AssetName.Contains("levels") ? "trimesh" : "hull");
+                builder.EndComponent();
+            }
         }
 
         private void ParseActor(BaseInfo info)
@@ -272,21 +250,16 @@ namespace ImportTool
 			var h = parser.ReadFloat(); // capsule height
             parser.ReadLine();
             var r = parser.ReadFloat(); // capsule radius 
-            builder.BeginComponent("physics");            
+
+            builder.BeginComponent("physics");
             builder.AddParameter("type", "capsule");
             builder.AddParameter("radius", r.ToString(CultureInfo.InvariantCulture));
             builder.AddParameter("height", h.ToString(CultureInfo.InvariantCulture));
             builder.EndComponent();
 
-            // TODO: Animations stuff
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
             var path = Path.GetDirectoryName(info.AssetName);
-            builder.AddAsset(fn + ".mesh", "MeshData", false, info.AssetName);
             builder.AddAsset(fn + ".rest", "AnimationData", false, info.AssetName);
-            builder.BeginComponent("mesh");
-            builder.AddParameter("meshData", fn + ".mesh");
-            builder.EndComponent();
-
             builder.BeginComponent("animation");
             builder.AddParameter("restPose", fn + ".rest");
             builder.AddParameter("controllerType", "blend");
@@ -319,17 +292,18 @@ namespace ImportTool
             }
         }
 
-        private void ParseProjectile(BaseInfo info)
+        private void ParseProjectile()
         {
             parser.ReadLine();
             var r = parser.ReadFloat(); // projectile radius
+
             builder.BeginComponent("physics");            
             builder.AddParameter("type", "sphere");
             builder.AddParameter("radius", r.ToString(CultureInfo.InvariantCulture));
             builder.EndComponent();
         }
 
-        private void ParseParticles(BaseInfo info)
+        private void ParseParticles()
 		{
 			Log.WriteLine(LogLevel.Warning, "Particles not implemented");
             // TODO: Implement particles
