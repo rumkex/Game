@@ -120,7 +120,7 @@ namespace ImportTool
             }
 
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
-            builder.AddAsset(fn + ".mesh", "MeshData", info.AssetName.EndsWith(".obj"), info.AssetName);
+            builder.AddAsset(fn + ".mesh", info.AssetName.EndsWith(".obj"), info.AssetName);
             builder.BeginComponent("mesh");
             builder.AddParameter("meshData", fn + ".mesh");
             builder.EndComponent();
@@ -235,7 +235,7 @@ namespace ImportTool
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
             if (info.AssetName.EndsWith(".obj"))
             {
-                builder.AddAsset(fn + ".hull", "PhysicsData", true, info.AssetName);
+                builder.AddAsset(fn + ".hull", true, info.AssetName);
                 builder.BeginComponent("physics");
                 builder.AddParameter("static", "true");
                 builder.AddParameter("physData", fn + ".hull");
@@ -259,7 +259,7 @@ namespace ImportTool
 
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
             var path = Path.GetDirectoryName(info.AssetName);
-            builder.AddAsset(fn + ".rest", "AnimationData", false, info.AssetName);
+            builder.AddAsset(fn + ".rest", false, info.AssetName);
             builder.BeginComponent("animation");
             builder.AddParameter("restPose", fn + ".rest");
             builder.AddParameter("controllerType", "blend");
@@ -269,7 +269,7 @@ namespace ImportTool
             {
                 var animname = Path.GetFileNameWithoutExtension(anim);
                 var alias = fn + ".animation." + animname;
-                builder.AddAsset(alias, "AnimationData", false, anim.Remove(0, baseDir.Length).Replace('\\', '/'));
+                builder.AddAsset(alias, false, anim.Remove(0, baseDir.Length).Replace('\\', '/'));
                 
                 if (sb.Length != 0)
                     sb.Append(";");
@@ -355,7 +355,7 @@ namespace ImportTool
             parser.ReadLine();
             var s = parser.ReadVector3();
             r = r / 180f * (float)Math.PI; // Convert to radians
-
+            
             if (addTransform)
             {                
                 builder.BeginComponent("transform");

@@ -109,6 +109,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <PropertyGroup>
-    <PostBuildEvent>$(TargetPath) -c "$(SolutionDir)assets\test.map"</PostBuildEvent>
+    <PostBuildEvent>$(TargetPath) -c "$(SolutionDir)assets\test.map" -a "$(SolutionDir)assets\magic_ball.map" -a "$(SolutionDir)assets\projectiles.map" -a "$(SolutionDir)assets\particles.map" -a "$(SolutionDir)assets\hit_particles.map" -a "$(SolutionDir)assets\ball_particles.map" -o "$(SolutionDir)assets\test.map.xml"</PostBuildEvent>
   </PropertyGroup>
 </Project>

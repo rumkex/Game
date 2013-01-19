@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Calcifer.Engine.Scenery;
 using Calcifer.Utilities.Logging;
 using System.Xml.Serialization;
+using System.Linq;
 
 namespace ImportTool
 {
@@ -17,44 +19,81 @@ namespace ImportTool
         }
 
         void Run(string[] args)
-        {			
-            if (args.Length < 1)
+        {
+            var argStack = new Stack<string>(args.Reverse());
+            if (argStack.Count < 1)
             {
                 Console.WriteLine("No command specified. Use 'help' for list of available commands");
                 return;
             }
 	        try
 	        {
-		        switch (args[0])
-		        {
-			        case "help":
-				        ShowHelp();
-				        break;
-			        case "-c":
-			        case "convert":
-				        Convert(args[1]);
-				        break;
-		        }
+                while (argStack.Count > 0)
+                {
+                    var sw = argStack.Pop();
+                    switch (sw)
+                    {
+                        case "help":
+                            ShowHelp();
+                            break;
+                        case "-c":
+                        case "convert":
+                            Convert(argStack.Pop());
+                            break;
+                        case "-a":
+                        case "append":
+                            Append(argStack.Pop());
+                            break;
+                        case "-o":
+                        case "output":
+                            Write(argStack.Pop());
+                            break;
+                    }
+                }
 	        }
 	        catch (IndexOutOfRangeException)
 	        {
 		        Console.WriteLine("Not enough arguments.");
 		        return;
 	        }
-	        catch (Exception ex)
-	        {
-		        Log.WriteLine(LogLevel.Fatal, ex.Message);
-	        }
+	        //catch (Exception ex)
+	        //{
+		    //    Log.WriteLine(LogLevel.Fatal, ex.Message);
+	        //}
+        }
+
+        private Map map;
+
+        private void Write(string filename)
+        {
+            if (map == null)
+            {
+                Log.WriteLine(LogLevel.Error, "Nothing to output");
+                return;
+            }
+            var serializer = new XmlSerializer(typeof(Map));
+            using (var f = File.Open(filename, FileMode.Create))
+                serializer.Serialize(f, map);
+            map = null;
+        }
+
+        private void Append(string filename)
+        {
+            if (map == null)
+            {
+                Log.WriteLine(LogLevel.Error, "Nothing to append to");
+                return;
+            }
+            var parser = new LsaMapParser();
+            var appendMap = parser.Load(filename);
+            foreach (var asset in appendMap.Assets) if (!map.Assets.Contains(asset.Name))  map.Assets.Add(asset);
+            foreach (var def in appendMap.Definitions) if (!map.Definitions.Contains(def.Name)) map.Definitions.Add(def);
         }
 
         void Convert(string filename)
         {
             var parser = new LsaMapParser();
-            var map = parser.Load(filename);
-	        if (map == null) return;
-            var serializer = new XmlSerializer(typeof(Map));
-            using (var f = File.Open(filename + ".xml", FileMode.Create))
-                serializer.Serialize(f, map);
+            map = parser.Load(filename);
         }
 
         void ShowHelp()

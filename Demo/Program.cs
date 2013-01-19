@@ -10,7 +10,6 @@ using Calcifer.Engine.Content.Data;
 using Calcifer.Engine.Content.Pipeline;
 using Calcifer.Engine.Graphics;
 using Calcifer.Engine.Physics;
-using Calcifer.Engine.Scenegraph;
 using Calcifer.Engine.Scenery;
 using Calcifer.Engine.Scripting;
 using Calcifer.Utilities.Logging;
@@ -94,12 +93,14 @@ namespace Demo
             
             var serializer = new XmlSerializer(typeof(Map));
             var map = (Map) serializer.Deserialize(content.Providers.LoadAsset("assets/test.map.xml"));
-            var sceneBuilder = new SceneBuilder(content);
-            sceneBuilder.CreateFromMap(map);
+            var factory = new EntityFactory(content);
+            foreach (var asset in map.Assets) factory.AddAsset(asset);
+            foreach (var def in map.Definitions) factory.Define(def);
+            foreach (var inst in map.Instances) factory.Create(inst);
 
             renderService = new RenderService();
             physicsService = new PhysicsService();
-            luaService = new LuaService();
+            luaService = new LuaService(factory);
             stateService = new StateService();
 
             var viewer = Entity.Create("viewer", new CameraComponent(), new TransformComponent(), new KeyboardControllerComponent());
