@@ -301,6 +301,9 @@ namespace ImportTool
             builder.AddParameter("type", "sphere");
             builder.AddParameter("radius", r.ToString(CultureInfo.InvariantCulture));
             builder.EndComponent();
+
+            builder.BeginComponent("projectile");
+            builder.EndComponent();
         }
 
         private void ParseParticles()
