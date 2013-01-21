@@ -121,7 +121,7 @@ namespace ImportTool
 
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
             builder.AddAsset(fn + ".mesh", info.AssetName.EndsWith(".obj"), info.AssetName);
-            builder.BeginComponent("mesh");
+            builder.BeginComponent("render");
             builder.AddParameter("meshData", fn + ".mesh");
             builder.EndComponent();
 
@@ -154,10 +154,7 @@ namespace ImportTool
                     Log.WriteLine(LogLevel.Fatal, "unknown LSA object type: " + type);
                     break;
             }
-
-            builder.BeginComponent("render");
-            builder.EndComponent();
-
+            
             parser.ReadLine();// #script_filename_whatever
             var scriptName = parser.ReadLine();
             parser.ReadLine(); // #script_length

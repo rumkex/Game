@@ -90,17 +90,17 @@ namespace Demo
             content.Loaders.Add(new ObjLoader(content));
             content.Loaders.Add(new SmdLoader(content));
             content.Loaders.Add(new SmdAnimLoader(content));
+            ResourceFactory.SetManager(content);
             
             var serializer = new XmlSerializer(typeof(Map));
             var map = (Map) serializer.Deserialize(content.Providers.LoadAsset("assets/test.map.xml"));
-            var factory = new EntityFactory(content);
-            foreach (var asset in map.Assets) factory.AddAsset(asset);
-            foreach (var def in map.Definitions) factory.Define(def);
-            foreach (var inst in map.Instances) factory.Create(inst);
+            ResourceFactory.AddAssetRange(map.Assets);
+            foreach (var def in map.Definitions) EntityFactory.Define(def);
+            foreach (var inst in map.Instances) EntityFactory.Create(inst);
 
             renderService = new RenderService();
             physicsService = new PhysicsService();
-            luaService = new LuaService(factory);
+            luaService = new LuaService();
             stateService = new StateService();
 
             var viewer = Entity.Create("viewer", new CameraComponent(), new TransformComponent(), new KeyboardControllerComponent());
