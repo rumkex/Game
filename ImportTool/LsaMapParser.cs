@@ -1,6 +1,11 @@
 ﻿using System.IO;
 using System.Linq;
+using Calcifer.Engine.Components;
+using Calcifer.Engine.Graphics;
+using Calcifer.Engine.Graphics.Animation;
+using Calcifer.Engine.Physics;
 using Calcifer.Engine.Scenery;
+using Calcifer.Engine.Scripting;
 using Calcifer.Utilities;
 using Calcifer.Utilities.Logging;
 using OpenTK;
@@ -114,14 +119,14 @@ namespace ImportTool
                     sb.Append(nodeName);
                     ParseNode(nodeName, i == 0);
                 }
-                builder.BeginComponent("luaStorage");
+                builder.BeginComponent<WaypointComponent>();
                 builder.AddParameter("nodes", sb.ToString());
                 builder.EndComponent();
             }
 
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
             builder.AddAsset(fn + ".mesh", info.AssetName.EndsWith(".obj"), info.AssetName);
-            builder.BeginComponent("render");
+            builder.BeginComponent<RenderComponent>();
             builder.AddParameter("meshData", fn + ".mesh");
             builder.EndComponent();
 
@@ -164,7 +169,7 @@ namespace ImportTool
             string source = "";
             if (scriptName != "none")
             {
-                builder.BeginComponent("luaScript");
+                builder.BeginComponent<LuaComponent>();
                 builder.AddParameter("sourceRef", Path.Combine(baseDir, scriptName));
                 builder.EndComponent();
             } else if (len != 0)
@@ -174,7 +179,7 @@ namespace ImportTool
                     s.Append(parser.ReadLine() + "\n");
                 source = s.ToString();
 
-                builder.BeginComponent("luaScript");
+                builder.BeginComponent<LuaComponent>();
                 builder.AddParameter("source", source);
                 builder.EndComponent();
             }
@@ -192,7 +197,7 @@ namespace ImportTool
             parser.ReadLine(); // #box offset
             var off = parser.ReadVector3();
             
-            builder.BeginComponent("physics");
+            builder.BeginComponent<PhysicsComponent>();
             builder.AddParameter("type", "box");
             builder.AddParameter("size", dim.ConvertToString());
             builder.AddParameter("offset", off.ConvertToString());
@@ -202,14 +207,14 @@ namespace ImportTool
         private void ParseMovableBox()
 		{
             ParseBox();
-            builder.BeginComponent("movable");
+            builder.BeginComponent<WaypointMovableComponent>();
             builder.EndComponent();
         }
 
         private void ParsePushableBox()
 		{
             ParseBox();
-			builder.BeginComponent("crate");
+            builder.BeginComponent<CrateComponent>();
 			builder.EndComponent();
         }
 
@@ -218,11 +223,11 @@ namespace ImportTool
             parser.ReadLine(); // #box
 			var dim = parser.ReadVector3();
 
-			builder.BeginComponent("physics");
+            builder.BeginComponent<PhysicsComponent>();
 			builder.AddParameter("type", "box");
 			builder.AddParameter("size", dim.ConvertToString());
 			builder.EndComponent();
-			builder.BeginComponent("sensor");
+            builder.BeginComponent<SensorComponent>();
 			builder.EndComponent();
         }
 
@@ -232,12 +237,19 @@ namespace ImportTool
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
             if (info.AssetName.EndsWith(".obj"))
             {
+                bool isLevel = info.AssetName.Contains("levels");
                 builder.AddAsset(fn + ".hull", true, info.AssetName);
-                builder.BeginComponent("physics");
+                builder.BeginComponent<PhysicsComponent>();
                 builder.AddParameter("static", "true");
                 builder.AddParameter("physData", fn + ".hull");
-                builder.AddParameter("type", info.AssetName.Contains("levels") ? "trimesh" : "hull");
+                builder.AddParameter("type", isLevel ? "trimesh" : "hull");
                 builder.EndComponent();
+                if (isLevel)
+                {
+                    builder.BeginComponent<TerrainComponent>();
+                    builder.AddParameter("physData", fn + ".hull");
+                    builder.EndComponent();
+                }
             }
         }
 
@@ -248,7 +260,7 @@ namespace ImportTool
             parser.ReadLine();
             var r = parser.ReadFloat(); // capsule radius 
 
-            builder.BeginComponent("physics");
+            builder.BeginComponent<PhysicsComponent>();
             builder.AddParameter("type", "capsule");
             builder.AddParameter("radius", r.ToString(CultureInfo.InvariantCulture));
             builder.AddParameter("height", h.ToString(CultureInfo.InvariantCulture));
@@ -257,9 +269,8 @@ namespace ImportTool
             var fn = Path.GetFileNameWithoutExtension(info.AssetName);
             var path = Path.GetDirectoryName(info.AssetName);
             builder.AddAsset(fn + ".rest", false, info.AssetName);
-            builder.BeginComponent("animation");
+            builder.BeginComponent<BlendAnimationController>();
             builder.AddParameter("restPose", fn + ".rest");
-            builder.AddParameter("controllerType", "blend");
             var sb = new StringBuilder();
             var animsPath = Path.Combine(baseDir, Path.Combine(path, "anims"));
             foreach (var anim in Directory.GetFiles(animsPath, "*.smd"))
@@ -275,16 +286,16 @@ namespace ImportTool
             builder.AddParameter("animations", sb.ToString());
 			builder.EndComponent();
 
-			builder.BeginComponent("motion");
+			builder.BeginComponent<MotionComponent>();
 			builder.EndComponent();
 
-            builder.BeginComponent("health");
+            builder.BeginComponent<HealthComponent>();
             builder.AddParameter("hp", info.Name == "heroe" ? "100": "3");
             builder.EndComponent();
 
             if (info.Name == "heroe")
             {
-                builder.BeginComponent("player");
+                builder.BeginComponent<PlayerStateComponent>();
                 builder.EndComponent();
             }
         }
@@ -294,12 +305,12 @@ namespace ImportTool
             parser.ReadLine();
             var r = parser.ReadFloat(); // projectile radius
 
-            builder.BeginComponent("physics");            
+            builder.BeginComponent<PhysicsComponent>();            
             builder.AddParameter("type", "sphere");
             builder.AddParameter("radius", r.ToString(CultureInfo.InvariantCulture));
             builder.EndComponent();
 
-            builder.BeginComponent("projectile");
+            builder.BeginComponent<ProjectileComponent>();
             builder.EndComponent();
         }
 
@@ -357,8 +368,8 @@ namespace ImportTool
             r = r / 180f * (float)Math.PI; // Convert to radians
             
             if (addTransform)
-            {                
-                builder.BeginComponent("transform");
+            {
+                builder.BeginComponent<TransformComponent>();
                 builder.AddParameter("translation", t.ConvertToString());
                 builder.AddParameter("rotation", r.ConvertToString());
                 builder.AddParameter("scale", s.ConvertToString());
@@ -366,7 +377,7 @@ namespace ImportTool
             }
 
             builder.BeginEntity(nodeName);
-            builder.BeginComponent("transform");
+            builder.BeginComponent<TransformComponent>();
             builder.AddParameter("translation", t.ConvertToString());
             builder.AddParameter("rotation", r.ConvertToString());
             builder.AddParameter("scale", s.ConvertToString());
