@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Linq;
 using Calcifer.Engine.Components;
 using Calcifer.Engine.Graphics;
 using Calcifer.Engine.Graphics.Animation;
@@ -119,7 +118,7 @@ namespace ImportTool
                     sb.Append(nodeName);
                     ParseNode(nodeName, i == 0);
                 }
-                builder.BeginComponent<WaypointComponent>();
+                builder.BeginComponent("WaypointComponent");
                 builder.AddParameter("nodes", sb.ToString());
                 builder.EndComponent();
             }
@@ -169,7 +168,7 @@ namespace ImportTool
             string source = "";
             if (scriptName != "none")
             {
-                builder.BeginComponent<LuaComponent>();
+                builder.BeginComponent("LuaComponent");
                 builder.AddParameter("sourceRef", Path.Combine(baseDir, scriptName));
                 builder.EndComponent();
             } else if (len != 0)
@@ -179,7 +178,7 @@ namespace ImportTool
                     s.Append(parser.ReadLine() + "\n");
                 source = s.ToString();
 
-                builder.BeginComponent<LuaComponent>();
+                builder.BeginComponent("LuaComponent");
                 builder.AddParameter("source", source);
                 builder.EndComponent();
             }
@@ -207,7 +206,7 @@ namespace ImportTool
         private void ParseMovableBox()
 		{
             ParseBox();
-            builder.BeginComponent<WaypointMovableComponent>();
+            builder.BeginComponent("WaypointMovableComponent");
             builder.EndComponent();
         }
 
@@ -295,7 +294,7 @@ namespace ImportTool
 
             if (info.Name == "heroe")
             {
-                builder.BeginComponent<PlayerStateComponent>();
+                builder.BeginComponent("PlayerStateComponent");
                 builder.EndComponent();
             }
         }

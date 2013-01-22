@@ -8,6 +8,7 @@ using Calcifer.Engine.Content.Pipeline;
 using Calcifer.Engine.Graphics;
 using Calcifer.Engine.Graphics.Animation;
 using Calcifer.Engine.Graphics.Primitives;
+using Calcifer.Engine.Primitives;
 using Calcifer.Utilities;
 using Calcifer.Utilities.Logging;
 using OpenTK;
