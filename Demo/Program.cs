@@ -78,6 +78,9 @@ namespace Demo
             GL.Enable(EnableCap.VertexArray);
             GL.Enable(EnableCap.IndexArray);
 			GL.Enable(EnableCap.Light0);
+
+            GL.Enable(EnableCap.AlphaTest);
+            GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
         }
 
         protected override void OnLoad(EventArgs e)
