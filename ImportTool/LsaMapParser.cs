@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using Calcifer.Engine.Components;
 using Calcifer.Engine.Graphics;
 using Calcifer.Engine.Graphics.Animation;
@@ -128,9 +129,25 @@ namespace ImportTool
             builder.BeginComponent<RenderComponent>();
             builder.AddParameter("meshData", fn + ".mesh");
             builder.EndComponent();
-
+            
             parser.ReadLine();
             var type = parser.ReadLine();
+            
+            if (info.AssetName.EndsWith(".smd") && type != ObjectType.Actor)
+            {
+                // it's probably an animated object, check for idle animation
+                var anim = Directory.GetFiles(baseDir + Path.GetDirectoryName(info.AssetName), "anims/*.smd", SearchOption.AllDirectories).FirstOrDefault();
+                if (anim != null)
+                {
+                    builder.AddAsset(fn + ".rest", false, info.AssetName);
+                    builder.AddAsset(fn + ".animation", false, anim.Remove(0, baseDir.Length).Replace('\\', '/'));
+                    builder.BeginComponent<SimpleAnimationController>();
+                    builder.AddParameter("animData", fn + ".animation");
+                    builder.AddParameter("restPose", fn + ".rest");
+                    builder.EndComponent();
+                }
+            }
+
             switch (type)
             {
                 case ObjectType.Actor:
@@ -271,8 +288,7 @@ namespace ImportTool
             builder.BeginComponent<BlendAnimationController>();
             builder.AddParameter("restPose", fn + ".rest");
             var sb = new StringBuilder();
-            var animsPath = Path.Combine(baseDir, Path.Combine(path, "anims"));
-            foreach (var anim in Directory.GetFiles(animsPath, "*.smd"))
+            foreach (var anim in Directory.GetFiles(baseDir + path, "anims/*.smd", SearchOption.AllDirectories))
             {
                 var animname = Path.GetFileNameWithoutExtension(anim);
                 var alias = fn + ".animation." + animname;
