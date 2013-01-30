@@ -1,3 +1,12 @@
 [submodule "GameEngine"]
 	path = GameEngine
 	url = git://github.com/ambient92/Calcifer.git
+[submodule "libs/ComponentKit"]
+	path = libs/ComponentKit
+	url = git://github.com/ambient92/ComponentKit.git
+[submodule "libs/LuaInterface"]
+	path = libs/LuaInterface
+	url = git://github.com/ambient92/LuaInterface.git
+[submodule "libs/QuickFont"]
+	path = libs/QuickFont
+	url = git://github.com/ambient92/QuickFont.git

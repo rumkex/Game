@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<TextureManager xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" texture="ui/ui.png">
+  <quads>
+    <quad name="main-cornerTopLeft" X="0" Y="0" width="14" height="14" />
+    <quad name="main-cornerBottomLeft" X="0" Y="14" width="14" height="14" />
+    <quad name="main-cornerTopRight" X="24" Y="0" width="14" height="14" />
+    <quad name="main-cornerBottomRight" X="24" Y="14" width="14" height="14" />
+    <quad name="main-borderLight" X="14" Y="0" width="10" height="14" />
+    <quad name="main-borderDark" X="14" Y="14" width="10" height="14" />	
+	<quad name="main-active" X="105" Y="31" width="22" height="11" />
+	<quad name="main-background" X="105" Y="46" width="22" height="11" />
+	<quad name="fireParticle" X="1" Y="87" width="31" height="31" />
+	<quad name="missing" X="113" Y="113" width="15" height="15" />	
+  </quads>
+</TextureManager>

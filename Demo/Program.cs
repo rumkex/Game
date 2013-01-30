@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -12,12 +13,16 @@ using Calcifer.Engine.Graphics;
 using Calcifer.Engine.Physics;
 using Calcifer.Engine.Scenegraph;
 using Calcifer.Engine.Scenery;
+using Calcifer.UI;
+using Calcifer.UI.Controls;
+using Calcifer.UI.Layouts;
 using Calcifer.Utilities.Logging;
 using ComponentKit;
 using ComponentKit.Model;
 using Demo.Import;
 using Demo.Scripting;
 using OpenTK;
+using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
@@ -34,10 +39,13 @@ namespace Demo
         private StateService stateService;
 
         private RenderPass basePass;
+        private UIPass uiPass;
+
+        private Canvas canvas;
 
         private LinkedList<IUpdateable> updateables;
 
-        private Game() : base(800, 600)
+        private Game() : base(800, 600, new GraphicsMode(new ColorFormat(8, 8, 8, 8), 24, 8, 2))
         {
             updateables = new LinkedList<IUpdateable>();
             entities = EntityRegistry.Current;
@@ -106,7 +114,7 @@ namespace Demo
             physicsService = new PhysicsService();
             luaService = new LuaService();
             stateService = new StateService();
-
+            
             var viewer = Entity.Create("viewer", new CameraComponent(), new TransformComponent(), new KeyboardControllerComponent());
             viewer.GetComponent<TransformComponent>().Translation = new Vector3(-5f, 1f, 2f);
 
@@ -120,12 +128,45 @@ namespace Demo
             Keyboard.KeyDown += (sender, args) =>
                                     {
                                         if (args.Key == Key.P) RenderHints<bool>.SetHint("debugPhysics", !RenderHints<bool>.GetHint("debugPhysics"));
+                                        if (args.Key == Key.I) renderUI = !renderUI;
                                         if (args.Key == Key.F5) stateService.SaveState();
                                         if (args.Key == Key.F6) stateService.RestoreState();
+                                        if (renderUI)
+                                        {
+                                            if (args.Key == Key.Enter) canvas.AcceptInput(InputKey.Return);
+                                            if (args.Key == Key.Up) 
+                                                canvas.AcceptInput(InputKey.Up);
+                                            if (args.Key == Key.Down) 
+                                                canvas.AcceptInput(InputKey.Down);
+                                            if (args.Key >= Key.A && args.Key <= Key.Z) canvas.AcceptInput((InputKey)('a' + args.Key - Key.A));
+                                        }
                                     };
 
+            SetupUI();
+
             basePass = new BaseRenderPass();
+            uiPass = new UIPass(canvas);
             renderService.AddLight(5.0f * Vector3.UnitZ, new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.6f * Vector3.One, 1.0f), new Vector4(0.7f * Vector3.One, 1.0f));
+        }
+
+        private void SetupUI()
+        {
+            canvas = new Canvas(new UIRenderer());
+            var fr = new Frame(canvas)
+                {
+                    Bounds = new Rectangle(0, 0, ClientSize.Width, ClientSize.Height)
+                };
+            fr.Padding.Set(14);
+            var grid = new GridLayout(fr)
+                           {
+                               ForceSize = true, 
+                               Rows = 7,
+                               Columns = 1,
+                               Margin = new Size(100, 10)
+                           };
+            new Button(grid) { Text = "Button 1" }.Padding.Set(14);
+            new Button(grid) { Text = "Button 2" }.Padding.Set(14);
+            new Button(grid) { Text = "Button 3" }.Padding.Set(14);
         }
 
         protected override void OnResize(EventArgs e)
@@ -150,7 +191,7 @@ namespace Demo
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
-
+            if (renderUI) return; // paused when rendering UI
 	        physicsService.Update(e.Time);
             var current = updateables.First;
             while (current != null) // cannot use enumeration since triggers may fire and modify the collection
@@ -160,6 +201,7 @@ namespace Demo
             }
         }
 
+        private bool renderUI = false;
         private const int FpsSamples = 100;
         private Queue<double> fpsQueue = new Queue<double>(FpsSamples);
 
@@ -172,6 +214,7 @@ namespace Demo
 
             base.OnRenderFrame(e);
             renderService.Render(basePass, CameraComponent.Current);
+            if (renderUI) renderService.Render(uiPass, CameraComponent.Current);
             SwapBuffers();
         }
     }

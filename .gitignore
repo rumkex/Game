@@ -2,6 +2,7 @@
 *.suo
 bin
 obj
+/packages
 /assets
 /interface
 /scripts
