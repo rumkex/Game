@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using Calcifer.Engine.Graphics;
 using Calcifer.Engine.Particles;
 using Calcifer.Engine.Particles.Emitters;
@@ -15,13 +17,15 @@ namespace Demo
         private readonly Dictionary<string, object> properties;
         private TextureManager texManager;
         private QFont font;
+        private FontRenderer renderer;
 
         private ParticleManager particleManager;
         private IList<Particle> particleList;
 
         public UIRenderer()
         {
-            font = new QFont("../ui/lubalin.ttf", 25, FontStyle.Bold);
+            renderer = new FontRenderer();
+            font = new QFont(renderer, "../ui/lubalin.ttf", 25, FontStyle.Bold);
             texManager = TextureManager.FromFile("../ui/ui.xml");
             particleManager = new ParticleManager(this);
             var fireEmitter = new LineEmitter
@@ -131,8 +135,8 @@ namespace Demo
             }
 
             var size = font.Measure(element.Text);
-            font.Print(element.Text, element.Size, QFontAlignment.Centre,
-                       new Vector2(element.Position.X + element.Width / 2f,
+            font.Print(element.Text, element.Width, QFontAlignment.Centre,
+                       new PointF(element.Position.X + element.Width / 2f,
                                    element.Position.Y + element.Height / 2f - size.Height / 2f));
             GL.Disable(EnableCap.StencilTest);
 
@@ -213,6 +217,76 @@ namespace Demo
         public void Update(IList<Particle> particles)
         {
             particleList = particles;
+        }
+    }
+
+    internal class FontRenderer: IFontRenderer
+    {
+        class GLTexture : Texture, IDisposable
+        {
+            private int id;
+            public int ID { get { return id; } }
+
+            public GLTexture(BitmapData dataSource)
+            {
+                Width = dataSource.Width;
+                Height = dataSource.Height;
+
+                id = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, id);
+
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp);
+
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0,
+                              OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, dataSource.Scan0);
+            }
+
+            public void Dispose()
+            {
+                GL.DeleteTexture(id);
+                GC.SuppressFinalize(this);
+            }
+
+            ~GLTexture()
+            {
+                Console.WriteLine("Texture leaked!");
+            }
+        }
+
+        public void DrawQuad(Quad q)
+        {
+            var tex = (GLTexture)q.Texture;
+            GL.BindTexture(TextureTarget.Texture2D, tex.ID);
+
+            GL.Begin(BeginMode.Quads);
+            GL.Color4(q.Color);
+            GL.TexCoord2(q.U1, q.V1); GL.Vertex2(q.X1, q.Y1);
+            GL.TexCoord2(q.U1, q.V2); GL.Vertex2(q.X1, q.Y2);
+            GL.TexCoord2(q.U2, q.V2); GL.Vertex2(q.X2, q.Y2);
+            GL.TexCoord2(q.U2, q.V1); GL.Vertex2(q.X2, q.Y1);
+            GL.End();
+        }
+
+        public void Begin(PointF offset)
+        {
+            GL.PushMatrix();
+            GL.Translate(offset.X, offset.Y, 0);
+            GL.Enable(EnableCap.Texture2D);
+            GL.Enable(EnableCap.Blend);
+        }
+
+        public void End()
+        {
+            GL.PopMatrix();
+        }
+
+        public Texture CreateTexture(BitmapData bitmapData)
+        {
+            return new GLTexture(bitmapData);
         }
     }
 }
