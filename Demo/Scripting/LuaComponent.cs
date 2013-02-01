@@ -5,6 +5,7 @@ using Calcifer.Engine.Physics;
 using Calcifer.Engine.Scenery;
 using Calcifer.Utilities;
 using ComponentKit.Model;
+using Demo.Components;
 
 namespace Demo.Scripting
 {

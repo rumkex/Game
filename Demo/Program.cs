@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
+using Calcifer.Engine;
 using Calcifer.Engine.Components;
 using Calcifer.Engine.Content;
 using Calcifer.Engine.Content.Data;
@@ -19,6 +20,7 @@ using Calcifer.UI.Layouts;
 using Calcifer.Utilities.Logging;
 using ComponentKit;
 using ComponentKit.Model;
+using Demo.Components;
 using Demo.Import;
 using Demo.Scripting;
 using OpenTK;
@@ -128,7 +130,7 @@ namespace Demo
             Keyboard.KeyDown += (sender, args) =>
                                     {
                                         if (args.Key == Key.P) RenderHints<bool>.SetHint("debugPhysics", !RenderHints<bool>.GetHint("debugPhysics"));
-                                        if (args.Key == Key.I) renderUI = !renderUI;
+                                        if (args.Key == Key.Escape) renderUI = !renderUI;
                                         if (args.Key == Key.F5) stateService.SaveState();
                                         if (args.Key == Key.F6) stateService.RestoreState();
                                         if (renderUI)
@@ -166,7 +168,9 @@ namespace Demo
                            };
             new Button(grid) { Text = "Button 1" }.Padding.Set(14);
             new Button(grid) { Text = "Button 2" }.Padding.Set(14);
-            new Button(grid) { Text = "Button 3" }.Padding.Set(14);
+            var quit = new Button(grid) { Text = "Quit" };
+            quit.Padding.Set(14);
+            quit.Pressed += (sender, e) => Close();
         }
 
         protected override void OnResize(EventArgs e)
@@ -191,6 +195,7 @@ namespace Demo
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
+            canvas.Tick((float) e.Time);
             if (renderUI) return; // paused when rendering UI
 	        physicsService.Update(e.Time);
             var current = updateables.First;

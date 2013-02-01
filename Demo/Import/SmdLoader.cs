@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -8,10 +7,8 @@ using Calcifer.Engine.Content;
 using Calcifer.Engine.Content.Pipeline;
 using Calcifer.Engine.Graphics;
 using Calcifer.Engine.Graphics.Buffers;
-using Calcifer.Engine.Graphics.Primitives;
 using Calcifer.Utilities;
 using Calcifer.Utilities.Logging;
-using OpenTK;
 using OpenTK.Graphics;
 
 namespace Demo.Import

@@ -1,11 +1,12 @@
-﻿using Calcifer.Engine.Components;
+﻿using Calcifer.Engine;
+using Calcifer.Engine.Components;
 using Calcifer.Engine.Physics;
 using Calcifer.Utilities;
 using Calcifer.Utilities.Logging;
 using ComponentKit.Model;
 using Jitter.LinearMath;
 
-namespace Demo.Scripting
+namespace Demo.Components
 {
     public class WaypointMovableComponent: DependencyComponent
     {

@@ -66,18 +66,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Components\CharacterController.cs" />
+    <Compile Include="Components\CrateComponent.cs" />
+    <Compile Include="Components\MotionComponent.cs" />
+    <Compile Include="Components\ProjectileComponent.cs" />
+    <Compile Include="Components\TerrainComponent.cs" />
     <Compile Include="Import\ObjLoader.cs" />
     <Compile Include="Import\SmdAnimLoader.cs" />
     <Compile Include="Import\SmdLoader.cs" />
     <Compile Include="Import\WaveLoader.cs" />
-    <Compile Include="Scripting\KeyboardControllerComponent.cs" />
+    <Compile Include="Components\KeyboardControllerComponent.cs" />
     <Compile Include="Scripting\LuaComponent.cs" />
     <Compile Include="Scripting\LuaService.cs" />
-    <Compile Include="Scripting\PlayerStateComponent.cs" />
+    <Compile Include="Components\PlayerStateComponent.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Scripting\WaypointComponent.cs" />
-    <Compile Include="Scripting\WaypointMovableComponent.cs" />
+    <Compile Include="Components\WaypointComponent.cs" />
+    <Compile Include="Components\WaypointMovableComponent.cs" />
     <Compile Include="TextureManager.cs" />
     <Compile Include="UIPass.cs" />
     <Compile Include="UIRenderer.cs" />

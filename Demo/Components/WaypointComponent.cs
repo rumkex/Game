@@ -6,7 +6,7 @@ using Calcifer.Engine.Scenery;
 using ComponentKit;
 using ComponentKit.Model;
 
-namespace Demo.Scripting
+namespace Demo.Components
 {
     public class WaypointComponent : Component, ISaveable, IConstructable
     {

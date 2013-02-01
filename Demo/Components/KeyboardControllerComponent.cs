@@ -1,10 +1,11 @@
+using Calcifer.Engine;
 using Calcifer.Engine.Components;
 using Calcifer.Utilities;
 using ComponentKit.Model;
 using OpenTK;
 using OpenTK.Input;
 
-namespace Demo.Scripting
+namespace Demo.Components
 {
     public class KeyboardControllerComponent : DependencyComponent, IUpdateable
     {

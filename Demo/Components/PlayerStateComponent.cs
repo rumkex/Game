@@ -1,6 +1,6 @@
 ﻿using ComponentKit.Model;
 
-namespace Demo.Scripting
+namespace Demo.Components
 {
     public class PlayerStateComponent: Component
     {
