@@ -1,42 +1,33 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Calcifer.Engine.Components;
-using Calcifer.Engine.Physics;
 using Calcifer.Engine.Scenery;
 using Calcifer.Utilities;
 using ComponentKit.Model;
 using Demo.Components;
+using LuaInterface;
 
 namespace Demo.Scripting
 {
     public class LuaComponent : Component, IUpdateable, ISaveable, IConstructable
     {
         private float wait;
-        
-        public LuaService Service { get; set; }
 
+        public LuaService Service { get; set; }
         public string Source { get; private set; }
+        public bool UseDeprecatedAPI { get; set; }
 
         public bool IsWaiting
         {
             get { return wait > 0f; }
         }
 
-        protected override void OnAdded(ComponentStateEventArgs args)
-        {
-            base.OnAdded(args);
-            var projectile = args.Record.GetComponent<ProjectileComponent>();
-            if (projectile != null)
-                projectile.EntityHit += (sender, e) => Service.SetWounded(e.Other.Name, true);
-        }
-        
         public void Update(double dt)
         {
-            if (IsWaiting)
-            {
-                wait -= (float) dt;
-            }
-            Service.ExecuteScript(this);
+            if (IsWaiting) wait -= (float) dt;
+            else if (UseDeprecatedAPI) 
+                Service.ExecuteScript(this);
         }
 
         public void Wait(float seconds)
@@ -56,7 +47,10 @@ namespace Demo.Scripting
 
         void IConstructable.Construct(IDictionary<string, string> param)
         {
-            Source = param.Get("source", null) ?? File.ReadAllText(param["sourceRef"]);
+            if (param.Get("source", null) != null)
+                Source = param.Get("source", null);
+            else
+                Source = File.Exists(param["sourceRef"]) ? File.ReadAllText(param["sourceRef"]) : "";
         }
     }
 }

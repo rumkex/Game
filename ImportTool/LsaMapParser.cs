@@ -303,12 +303,6 @@ namespace ImportTool
             builder.BeginComponent("HealthComponent");
             builder.AddParameter("hp", info.Name == "heroe" ? "100": "3");
             builder.EndComponent();
-
-            if (info.Name == "heroe")
-            {
-                builder.BeginComponent("PlayerStateComponent");
-                builder.EndComponent();
-            }
         }
 
         private void ParseProjectile()

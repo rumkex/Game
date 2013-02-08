@@ -1,4 +1,7 @@
-﻿using Calcifer.Engine.Components;
+﻿using System;
+using System.Linq;
+using Calcifer.Engine;
+using Calcifer.Engine.Components;
 using Calcifer.Engine.Graphics.Animation;
 using Calcifer.Engine.Physics;
 using Calcifer.Utilities;
@@ -12,7 +15,12 @@ namespace Demo.Components
     {
         [RequireComponent(AllowDerivedTypes = true)] private AnimationComponent anim;
         [RequireComponent] private PhysicsComponent phys;
+        private TerrainComponent terrain;
+        private PhysicsComponent terrainPhys;
         private CharacterController controller;
+        private double jumpCooldown;
+
+        public event EventHandler<StateChangeEventArgs> StateChanged; 
 
         protected override void OnAdded(ComponentStateEventArgs e)
         {
@@ -30,7 +38,7 @@ namespace Demo.Components
 
         protected override void OnRemoved(ComponentStateEventArgs e)
         {
-            phys.World.RemoveConstraint(controller);
+            if (controller != null) phys.World.RemoveConstraint(controller);
             base.OnRemoved(e);
         }
 
@@ -39,21 +47,30 @@ namespace Demo.Components
 		    if (!IsOutOfSync)
 			{
 				controller = new CharacterController(phys.World, phys.Body);
-			    phys.World.AddConstraint(controller);
+                controller.StateChanged += OnStateChanged;
+                phys.World.AddConstraint(controller);
+                var ground = Entity.FindAllWithComponent<TerrainComponent>().FirstOrDefault();
+                terrain = ground.GetComponent<TerrainComponent>();
+                terrainPhys = ground.GetComponent<PhysicsComponent>();
 		    }
 	    }
 
-	    public bool IsOnGround
+        private void OnStateChanged(object sender, StateChangeEventArgs e)
         {
-            get { return controller.BodyWalkingOn != null; }
+            if (StateChanged != null) StateChanged(this, e);
         }
 
-	    public string GetFloorMaterial()
+        public MotionState State
+        {
+            get { return controller.State; }
+        }
+
+        public TerrainType GetFloorMaterial()
 	    {
-		    if (!IsOnGround) return "";
+		    if (State != MotionState.Grounded) return TerrainType.None;
 			var floor = Entity.Find(controller.BodyWalkingOn.Tag.ToString());
 			var terrainComponent = floor.GetComponent<TerrainComponent>();
-		    if (terrainComponent == null) return "";
+		    if (terrainComponent == null) return TerrainType.None;
 			var material = terrainComponent.GetMaterial(phys.Body.Position + JVector.Forward * (controller.FeetPosition - 0.1f), JVector.Forward);
 		    return material;
 	    }
@@ -61,22 +78,34 @@ namespace Demo.Components
 	    public void SetTargetVelocity(Vector3 speed)
         {
 	        phys.Body.IsActive = true;
-            controller.TargetVelocity = speed.ToJVector();
+            controller.SetTargetVelocity(speed.ToJVector());
         }
-
-	    private double cooldown;
 
         public void Jump()
 		{
 			phys.Body.IsActive = true;
-	        if (cooldown > 0) return;
-			cooldown = 1.0;
-			controller.TryJump = true;
-        }
+	        if (jumpCooldown > 0) return;
+			jumpCooldown = 1.0;
+            controller.Jump();
+		}
 
 	    public void Update(double t)
 	    {
-			if (cooldown > 0) cooldown -= t;
+			if (jumpCooldown > 0) jumpCooldown -= t;
+            if (phys.CollidesWith(terrainPhys.Body))
+            {
+                var start = phys.Body.Position;
+                var delta = Vector3.Transform(-Vector3.UnitY, Record.GetComponent<TransformComponent>().Rotation);
+                switch (terrain.GetMaterial(start, delta.ToJVector()))
+                {
+                    case TerrainType.Ladder:
+                        controller.ClimbUp();
+                        break;
+                    case TerrainType.Obstacle:
+                        controller.ClimbOver();
+                        break;
+                }
+            }
 		}
 
 	    public void SetAngularVelocity(Vector3 w)

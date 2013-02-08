@@ -76,9 +76,10 @@
     <Compile Include="Import\SmdLoader.cs" />
     <Compile Include="Import\WaveLoader.cs" />
     <Compile Include="Components\KeyboardControllerComponent.cs" />
+    <Compile Include="RenderQueue.cs" />
     <Compile Include="Scripting\LuaComponent.cs" />
+    <Compile Include="Scripting\LuaInput.cs" />
     <Compile Include="Scripting\LuaService.cs" />
-    <Compile Include="Components\PlayerStateComponent.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Components\WaypointComponent.cs" />

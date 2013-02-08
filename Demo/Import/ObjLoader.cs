@@ -10,6 +10,8 @@ using Calcifer.Engine.Graphics.Buffers;
 using Calcifer.Engine.Physics;
 using Calcifer.Utilities;
 using Calcifer.Utilities.Logging;
+using Demo.Components;
+using Jitter.Collision;
 using OpenTK;
 using OpenTK.Graphics;
 
@@ -110,10 +112,38 @@ namespace Demo.Import
             RebuildGeometry(glist);
             RebuildGeometry(plist);
             var mesh = new MeshData(glist);
-            var pmesh = new PhysicsData(plist);
-            return new CompositeResource(mesh, pmesh);
+            if (plist.Count > 0)
+            {
+                var tris = plist[0].Triangles.Select(t => new TriangleVertexIndices(t.X, t.Y, t.Z)).ToList();
+                var verts = plist[0].Vertices.Select(v => v.Position.ToJVector()).ToList();
+                var physMaterials = plist.Select(g => new Tuple<int, int, TerrainType>(g.Offset / Vector3i.Size, g.Count, SelectMaterial(g.Material.Name))).ToList();
+                var pmesh = new PhysicsData(verts, tris);
+                return new CompositeResource(mesh, pmesh, new MaterialData(physMaterials));
+            }
+            return new CompositeResource(mesh);
         }
-        
+
+        private TerrainType SelectMaterial(string name)
+        {
+            if (name.Contains("water_level.png"))
+                return TerrainType.Water;
+            if (name.Contains("grass_level.png"))
+                return TerrainType.Grass;
+            if (name.Contains("dirt_level.png"))
+                return TerrainType.Dirt;
+            if (name.Contains("snow_level.png"))
+                return TerrainType.Snow;
+            if (name.Contains("wood_level.png"))
+                return TerrainType.Wood;
+            if (name.Contains("metal_level.png"))
+                return TerrainType.Metal;
+            if (name.Contains("ladder_level.png"))
+                return TerrainType.Ladder;
+            if (name.Contains("obstacle_level.png"))
+                return TerrainType.Obstacle;
+            return TerrainType.None;
+        }
+
         private void RebuildGeometry(List<Geometry> source)
         {
             var vertindex = new Dictionary<ushort, ushort>();
@@ -206,6 +236,27 @@ namespace Demo.Import
                 var norm = parameters[2] != "" ? int.Parse(parameters[2]) : 0;
                 yield return new Triple(vert, norm, tex);
             }
+        }
+    }
+
+    public class MaterialData : IResource
+    {
+        private readonly List<Tuple<int, int, TerrainType>> materials;
+
+        public MaterialData(List<Tuple<int, int, TerrainType>> physMaterials)
+        {
+            materials = physMaterials;
+        }
+        
+        public TerrainType GetMaterial(int index)
+        {
+            var match = materials.FirstOrDefault(t => index >= t.Item1 && index < t.Item1 + t.Item2);
+            return match != null ? match.Item3 : TerrainType.None;
+        }
+
+        public object Clone()
+        {
+            return new MaterialData(materials);
         }
     }
 }

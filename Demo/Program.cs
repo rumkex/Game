@@ -116,6 +116,8 @@ namespace Demo
             physicsService = new PhysicsService();
             luaService = new LuaService();
             stateService = new StateService();
+
+            updateables.AddLast(luaService);
             
             var viewer = Entity.Create("viewer", new CameraComponent(), new TransformComponent(), new KeyboardControllerComponent());
             viewer.GetComponent<TransformComponent>().Translation = new Vector3(-5f, 1f, 2f);
