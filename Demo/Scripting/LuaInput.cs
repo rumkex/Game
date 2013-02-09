@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using LuaInterface;
 using OpenTK.Input;
 
@@ -8,11 +9,13 @@ namespace Demo.Scripting
 {
     class LuaInput
     {
+        private KeyboardState state, oldState;
         public Table Keys { get; private set; }
         private readonly Dictionary<Key, LuaFunction> triggers = new Dictionary<Key, LuaFunction>();
 
         public LuaInput()
         {
+            oldState = Keyboard.GetState();
             Keys = new Table();
             foreach (var key in Enum.GetNames(typeof (Key)))
                 Keys[key] = Enum.Parse(typeof(Key), key);
@@ -26,10 +29,11 @@ namespace Demo.Scripting
 
         public void Poll()
         {
-            var state = Keyboard.GetState();
-            foreach (var trigger in triggers)
+            oldState = state;
+            state = Keyboard.GetState();
+            foreach (var trigger in triggers.Where(trigger => oldState[trigger.Key] != state[trigger.Key]))
             {
-                if (state[trigger.Key]) trigger.Value.Call();
+                trigger.Value.Call(state[trigger.Key]);
             }
         }
     }

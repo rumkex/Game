@@ -26,11 +26,13 @@ namespace Demo.Scripting
     {
         class LuaEntity: Table
         {
-            private readonly IEntityRecord record; 
+            private readonly IEntityRecord record;
+            private readonly LuaService parent;
 
-            public LuaEntity(IEntityRecord record)
+            public LuaEntity(IEntityRecord record, LuaService parent)
             {
                 this.record = record;
+                this.parent = parent;
             }
 
             public IComponent GetComponent(string type)
@@ -40,6 +42,7 @@ namespace Demo.Scripting
 
             public void Remove()
             {
+                parent.entities.Remove(record.Name);
                 var registry = record.Registry;
                 record.Drop();
                 registry.Synchronize();
@@ -58,6 +61,19 @@ namespace Demo.Scripting
             }
         }
 
+        class DelayedAction
+        {
+            public DelayedAction(double time, LuaFunction action)
+            {
+                Time = time;
+                Action = action;
+            }
+
+            public double Time { get; set; }
+            public LuaFunction Action { get; private set; }
+        }
+
+        private readonly Queue<DelayedAction> delayQueue = new Queue<DelayedAction>();
         private readonly Dictionary<string, LuaEntity> entities = new Dictionary<string, LuaEntity>(); 
         private readonly Lua lua;
         private readonly Random rand;
@@ -71,7 +87,10 @@ namespace Demo.Scripting
             lua = new Lua(); 
             rand = new Random();
             lua.RegisterFunction("print", this, new Action<object>(o => Log.WriteLine(LogLevel.Info, o.ToString())).Method);
-            lua.RegisterFunction("GetEntity", this, new Func<string, LuaEntity>(GetEntity).Method);
+            lua.RegisterFunction("GetEntity", this, new Func<string, LuaEntity>(GetEntity).Method); 
+            lua.RegisterFunction("Wait", this, new Action<double, LuaFunction>(Wait).Method);
+            lua.RegisterFunction("vector3", this, new Func<float, float, float, Vector3>((x, y, z) => new Vector3(x, y, z)).Method);
+            lua.RegisterFunction("vector2", this, new Func<float, float, Vector2>((x, y) => new Vector2(x, y)).Method);
             lua["Input"] = input = new LuaInput();
 
             // deprecated functionality
@@ -87,15 +106,28 @@ namespace Demo.Scripting
             InitializeText();
         }
 
+        private void Wait(double delay, LuaFunction action)
+        {
+            delayQueue.Enqueue(new DelayedAction(delay, action));
+        }
+
         private LuaEntity GetEntity(string name)
         {
-            if (!entities.ContainsKey(name)) entities.Add(name, new LuaEntity(Entity.Find(name)));
+            if (!entities.ContainsKey(name)) entities.Add(name, new LuaEntity(Entity.Find(name), this));
             return entities[name];
         }
 
         public void Update(double t)
         {
             input.Poll();
+            // update delayed events
+            for (var i = 0; i < delayQueue.Count; i++)
+            {
+                var action = delayQueue.Dequeue();
+                action.Time -= t;
+                if (action.Time <= 0f) action.Action.Call(); // execute when ready
+                else delayQueue.Enqueue(action);
+            }
         }
 
         public void Synchronize(IEnumerable<IComponent> components)
@@ -108,7 +140,7 @@ namespace Demo.Scripting
                 {
                     // Initialize a new lua entity    
                     c.Service = this;
-                    var luaEntity = new LuaEntity(c.Record);
+                    var luaEntity = new LuaEntity(c.Record, this);
                     lua["Entity"] = luaEntity;
                     entities.Add(c.Record.Name, luaEntity);
                     try
@@ -213,12 +245,12 @@ namespace Demo.Scripting
             lua.RegisterFunction("get_rot_z", this, new Func<string, float>(name => Get<TransformComponent>(name).Rotation.ToEuler().Z * 180f / 3.14159274f).Method);
             lua.RegisterFunction("angle", this, new Func<string, string, double>(GetAngle).Method);
             lua.RegisterFunction("distance", this, new Func<string, string, double>((name1, name2) => Distance(name1, name2)).Method);
-            lua.RegisterFunction("move_step_local", this, new Action<string, float, float, float>((name, x, y, z) =>
+            lua.RegisterFunction("move_step", this, new Action<string, float, float, float>((name, x, y, z) =>
                     {
-                        var v = Vector3.Transform(-new Vector3(x, y, z) * 30f, Get<TransformComponent>(name).Rotation);
+                        var v = -Vector3.Transform(new Vector3(x, y, z) * 30f, Quaternion.Invert(Get<TransformComponent>(name).Rotation));
                         Get<MotionComponent>(name).SetTargetVelocity(v);
                     }).Method);
-            lua.RegisterFunction("move_step", this, new Action<string, float, float, float>((name, x, y, z) => Get<MotionComponent>(name).SetTargetVelocity(30f * new Vector3(x, y, z))).Method);
+            lua.RegisterFunction("move_step_local", this, new Action<string, float, float, float>((name, x, y, z) => Get<MotionComponent>(name).SetTargetVelocity(30f * -new Vector3(x, y, z))).Method);
             lua.RegisterFunction("rotate_step", this, new Action<string, float, float, float>((name, x, y, z) => Get<MotionComponent>(name).SetAngularVelocity(30f * MathHelper.Pi / 180f * new Vector3(x, y, z))).Method);
             lua.RegisterFunction("jump", this, new Action<string>(name => Get<MotionComponent>(name).Jump()).Method);
         }

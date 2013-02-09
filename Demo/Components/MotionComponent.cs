@@ -2,7 +2,6 @@
 using System.Linq;
 using Calcifer.Engine;
 using Calcifer.Engine.Components;
-using Calcifer.Engine.Graphics.Animation;
 using Calcifer.Engine.Physics;
 using Calcifer.Utilities;
 using ComponentKit.Model;
@@ -13,12 +12,13 @@ namespace Demo.Components
 {
     public class MotionComponent : DependencyComponent, IUpdateable
     {
-        [RequireComponent(AllowDerivedTypes = true)] private AnimationComponent anim;
+        [RequireComponent] private TransformComponent transform;
         [RequireComponent] private PhysicsComponent phys;
         private TerrainComponent terrain;
         private PhysicsComponent terrainPhys;
         private CharacterController controller;
         private double jumpCooldown;
+        private Vector3 localVelocity;
 
         public event EventHandler<StateChangeEventArgs> StateChanged; 
 
@@ -75,10 +75,15 @@ namespace Demo.Components
 		    return material;
 	    }
 
+        public void SetTargetVelocity(float speed)
+        {
+            SetTargetVelocity(speed * -Vector3.UnitY);
+        }
+
 	    public void SetTargetVelocity(Vector3 speed)
         {
 	        phys.Body.IsActive = true;
-            controller.SetTargetVelocity(speed.ToJVector());
+            localVelocity = speed;
         }
 
         public void Jump()
@@ -90,7 +95,9 @@ namespace Demo.Components
 		}
 
 	    public void Update(double t)
-	    {
+        {
+            var spd = Vector3.Transform(localVelocity, transform.Rotation);
+            controller.SetTargetVelocity(spd.ToJVector());
 			if (jumpCooldown > 0) jumpCooldown -= t;
             if (phys.CollidesWith(terrainPhys.Body))
             {
@@ -112,5 +119,10 @@ namespace Demo.Components
 	    {
 		    phys.Body.AngularVelocity = w.ToJVector();
 	    }
+
+        public void SetAngularVelocity(float w)
+        {
+            SetAngularVelocity(new Vector3(0, 0, w));
+        }
     }
 }
