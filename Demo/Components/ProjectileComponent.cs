@@ -65,7 +65,7 @@ namespace Demo.Components
             if (!(JVector.Dot(vel, dir) > 0f)) return;
             var entity = Entity.Find(otherEntity);
             if (entity == null) return;
-            Log.WriteLine(LogLevel.Debug, "Hit detected on {0}", entity.Name);
+            //Log.WriteLine(LogLevel.Debug, "Hit detected on {0}", entity.Name);
             OnHit(entity);
             
         }

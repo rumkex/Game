@@ -149,7 +149,6 @@ namespace Demo.Components
                     var zVel = Body1.LinearVelocity.Z;
                     var climbFactor = targetVelocity.IsZero() ? 0 : JVector.Dot(targetVelocity, new JVector(0, 1, 0)) / targetVelocity.Length();
                     var delta = 0.8f * (climbFactor * ClimbVelocity - zVel);
-                    Console.WriteLine("{0}, {1}", climbFactor, targetVelocity);
                     Body1.ApplyImpulse(delta * JVector.Backward * Body1.Mass);
                     break;
             }
