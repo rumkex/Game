@@ -12,6 +12,7 @@ local AnimationMap = {
 	left = { [Behavior.Normal]="rotate_left" },
 	right = { [Behavior.Normal]="rotate_right" },
 	jump = { [Behavior.Normal]="jump" },
+	climb = { [Behavior.Normal]="climb_up_loop" },
 	fall = { [Behavior.Normal]="fall_loop" }
 }
 
@@ -20,6 +21,7 @@ Entity.velocity = 0
 Entity.angularVel = 0
 Entity.state = "Grounded"
 Entity.oldState = Entity.state
+Entity.animationSpeed = 1.0;
 
 function Entity:init()
 	Input:Bind(Input.Keys.F1, function(down) if down then self:changeBehavior(Behavior.Normal) end end)
@@ -62,6 +64,7 @@ end
 
 function Entity:updateAnimation()
 	local newAnim = nil
+	local speed = 1.0 -- animation speed factor
 	if self.state == "Grounded" then
 		if self.velocity == 0 then
 			if self.angularVel == 0 then
@@ -80,6 +83,9 @@ function Entity:updateAnimation()
 		newAnim = self:getAnimation("jump")
 	elseif self.state == "Falling" then
 		newAnim = self:getAnimation("fall")
+	elseif self.state == "Climbing" then
+		newAnim = self:getAnimation("climb")
+		speed = self.velocity
 	else
 		-- safety fallback, in case of undefined behavior
 		newAnim = self:getAnimation("idle")
@@ -87,6 +93,9 @@ function Entity:updateAnimation()
 	if newAnim ~= self.currentAnim then
 		self.currentAnim = newAnim
 		self.animation:Crossfade(newAnim, 0.5, true)
+	end
+	if speed ~= self.animation.Speed then
+		self.animation.Speed = speed	
 	end
 end
 
@@ -99,5 +108,5 @@ function Entity:getAnimation(name)
 end
 
 function Entity:onDamaged()
-
+	print "UGH!"
 end

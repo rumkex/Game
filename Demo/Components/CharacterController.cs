@@ -68,7 +68,7 @@ namespace Demo.Components
                 new JVector(0, 1, 0), 
                 (b, n, f) => b != Body1 && (b.BroadphaseTag & (int)BodyTags.Ghost) == 0,
                 out body, out normal, out depth);
-            bool collidesWithGround = world.CollisionSystem.Raycast(Body1.Position + JVector.Forward * (FeetPosition - 0.1f),
+            bool collidesWithGround = world.CollisionSystem.Raycast(Body1.Position + new JVector(0, 0.5f, 0) + JVector.Forward * (FeetPosition - 0.1f),
                 JVector.Forward, 
                 (b, n, f) => b != Body1 && (b.BroadphaseTag & (int)BodyTags.Ghost) == 0,
                 out body, out normal, out depth);
@@ -147,7 +147,7 @@ namespace Demo.Components
                     break;
                 case MotionState.Climbing:
                     var zVel = Body1.LinearVelocity.Z;
-                    var climbFactor = targetVelocity.IsZero() ? 0 : JVector.Dot(targetVelocity, new JVector(0, 1, 0)) / targetVelocity.Length();
+                    var climbFactor = targetVelocity.IsNearlyZero() ? 0 : JVector.Dot(targetVelocity, new JVector(0, 1, 0)) / targetVelocity.Length();
                     var delta = 0.8f * (climbFactor * ClimbVelocity - zVel);
                     Body1.ApplyImpulse(delta * JVector.Backward * Body1.Mass);
                     break;
